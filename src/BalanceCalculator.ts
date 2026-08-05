@@ -13,7 +13,16 @@ export interface SlotOutcome {
     symbol: string;
     chancePercent: number;
     reward: string;
-    flow: string;
+    /** Reward quantity granted per single hit of this symbol. */
+    rewardAmount: number;
+    rewardUnit: string;
+}
+
+export interface RollResult {
+    id: SlotSymbolId;
+    hits: number;
+    totalReward: number;
+    rewardUnit: string;
 }
 
 const DEFAULT_OUTCOMES: SlotOutcome[] = [
@@ -22,56 +31,64 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         symbol: 'Энергия для рулетки',
         chancePercent: 22,
         reward: 'Энергия +1',
-        flow: 'Мгновенно. Игрок просто делает еще один спин (ощущение "бесплатной игры").',
+        rewardAmount: 1,
+        rewardUnit: 'Энергия',
     },
     {
         id: 'gacha_small',
         symbol: 'Ресурс для гачи (Мало)',
         chancePercent: 20,
         reward: '5 Астральной Пыли',
-        flow: 'Мгновенно. Копится на счету.',
+        rewardAmount: 5,
+        rewardUnit: 'Астральная Пыль',
     },
     {
         id: 'pve',
         symbol: 'Символ PvE',
         chancePercent: 15,
         reward: 'Вход в подземелье/бой',
-        flow: 'Переход в экран выбора атаки -> Бой -> Награда (Сундук/Золото).',
+        rewardAmount: 1,
+        rewardUnit: 'PvE вход',
     },
     {
         id: 'gold_small',
         symbol: 'Золото (Малое)',
         chancePercent: 15,
         reward: '50 золота',
-        flow: 'Мгновенно. Летит в кошелек.',
+        rewardAmount: 50,
+        rewardUnit: 'Золото',
     },
     {
         id: 'gacha_large',
         symbol: 'Ресурс для гачи (Много)',
         chancePercent: 8,
         reward: '20 Астральной Пыли',
-        flow: 'Мгновенно. Копится на счету (эффект джекпота).',
+        rewardAmount: 20,
+        rewardUnit: 'Астральная Пыль',
     },
     {
         id: 'pvp',
         symbol: 'PvP символ',
         chancePercent: 8,
         reward: 'Нападение на игрока',
-        flow: 'Переход в экран атаки/грабежа.',
+        rewardAmount: 1,
+        rewardUnit: 'PvP атака',
     },
     {
         id: 'gold_large',
         symbol: 'Золото (Большое)',
         chancePercent: 7,
         reward: '200 золота',
-        flow: 'Мгновенно. Летит в кошелек.',
+        rewardAmount: 200,
+        rewardUnit: 'Золото',
     },
     {
         id: 'empty',
         symbol: 'Ничего (Пустой спин)',
         chancePercent: 5,
         reward: 'Нет награды',
-        flow: '',
+        rewardAmount: 0,
+        rewardUnit: '—',
     },
 ];
 
@@ -79,12 +96,15 @@ export class BalanceCalculator {
     private readonly outcomes: SlotOutcome[];
     private readonly root: HTMLElement;
     private readonly totalEl: HTMLElement;
+    private readonly rollsInput: HTMLInputElement;
+    private readonly resultCells = new Map<SlotSymbolId, HTMLElement>();
     private readonly inputs = new Map<SlotSymbolId, HTMLInputElement>();
 
     constructor(parentElement: HTMLElement) {
         this.outcomes = DEFAULT_OUTCOMES.map((outcome) => ({ ...outcome }));
         this.root = this.createRoot();
         this.totalEl = this.root.querySelector('[data-total]') as HTMLElement;
+        this.rollsInput = this.root.querySelector('[data-rolls]') as HTMLInputElement;
         parentElement.appendChild(this.root);
         this.renderTable();
         this.updateTotal();
@@ -123,10 +143,36 @@ export class BalanceCalculator {
         return this.outcomes.reduce((sum, outcome) => sum + outcome.chancePercent, 0);
     }
 
+    getRollCount(): number {
+        const parsed = Number(this.rollsInput.value);
+        if (!Number.isFinite(parsed)) {
+            return 0;
+        }
+        return Math.max(0, Math.floor(parsed));
+    }
+
+    /** Expected hits and reward totals for N rolls, weighted by chance %. */
+    calculate(rolls: number = this.getRollCount()): RollResult[] {
+        const safeRolls = Math.max(0, Math.floor(rolls));
+        const totalChance = this.getTotalChancePercent();
+
+        return this.outcomes.map((outcome) => {
+            const probability = totalChance > 0 ? outcome.chancePercent / totalChance : 0;
+            const hits = safeRolls * probability;
+            const totalReward = hits * outcome.rewardAmount;
+            return {
+                id: outcome.id,
+                hits,
+                totalReward,
+                rewardUnit: outcome.rewardUnit,
+            };
+        });
+    }
+
     private createRoot(): HTMLElement {
         const root = document.createElement('div');
         root.style.cssText = [
-            'width: min(1100px, 96vw)',
+            'width: min(960px, 96vw)',
             'max-height: 92vh',
             'overflow: auto',
             'color: #e8e8e8',
@@ -142,6 +188,49 @@ export class BalanceCalculator {
         title.textContent = 'Баланс слота';
         title.style.cssText = 'margin: 0 0 12px; font-size: 20px; font-weight: 600;';
         root.appendChild(title);
+
+        const controls = document.createElement('div');
+        controls.style.cssText = 'display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px;';
+
+        const rollsLabel = document.createElement('label');
+        rollsLabel.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; font-size: 14px;';
+        rollsLabel.append('Количество спинов:');
+
+        const rollsInput = document.createElement('input');
+        rollsInput.type = 'number';
+        rollsInput.min = '0';
+        rollsInput.step = '1';
+        rollsInput.value = '100';
+        rollsInput.setAttribute('data-rolls', '');
+        rollsInput.setAttribute('aria-label', 'Количество спинов');
+        rollsInput.style.cssText = [
+            'width: 100px',
+            'padding: 6px 8px',
+            'border: 1px solid #444',
+            'border-radius: 4px',
+            'background: #0f0f0f',
+            'color: #f0f0f0',
+            'font: inherit',
+        ].join(';');
+        rollsLabel.appendChild(rollsInput);
+        controls.appendChild(rollsLabel);
+
+        const calculateButton = document.createElement('button');
+        calculateButton.type = 'button';
+        calculateButton.textContent = 'Calculate';
+        calculateButton.style.cssText = [
+            'padding: 7px 14px',
+            'border: 1px solid #555',
+            'border-radius: 4px',
+            'background: #2a2a2a',
+            'color: #f0f0f0',
+            'font: inherit',
+            'cursor: pointer',
+        ].join(';');
+        calculateButton.addEventListener('click', () => this.applyResults());
+        controls.appendChild(calculateButton);
+
+        root.appendChild(controls);
 
         const tableHost = document.createElement('div');
         tableHost.setAttribute('data-table-host', '');
@@ -159,6 +248,7 @@ export class BalanceCalculator {
         const host = this.root.querySelector('[data-table-host]') as HTMLElement;
         host.replaceChildren();
         this.inputs.clear();
+        this.resultCells.clear();
 
         const table = document.createElement('table');
         table.style.cssText = [
@@ -169,7 +259,7 @@ export class BalanceCalculator {
         ].join(';');
 
         const colgroup = document.createElement('colgroup');
-        for (const width of ['22%', '12%', '18%', '48%']) {
+        for (const width of ['28%', '14%', '26%', '32%']) {
             const col = document.createElement('col');
             col.style.width = width;
             colgroup.appendChild(col);
@@ -178,7 +268,7 @@ export class BalanceCalculator {
 
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        for (const label of ['Символ на слоте', 'Шанс выпадения', 'Награда игрока', 'Что происходит дальше (Flow)']) {
+        for (const label of ['Символ на слоте', 'Шанс выпадения', 'Награда игрока', 'Результат']) {
             const th = document.createElement('th');
             th.textContent = label;
             th.style.cssText = [
@@ -218,11 +308,13 @@ export class BalanceCalculator {
         rewardCell.textContent = outcome.reward;
         this.styleCell(rewardCell);
 
-        const flowCell = document.createElement('td');
-        flowCell.textContent = outcome.flow || '—';
-        this.styleCell(flowCell);
+        const resultCell = document.createElement('td');
+        this.styleCell(resultCell);
+        resultCell.textContent = '—';
+        resultCell.style.color = '#9e9e9e';
+        this.resultCells.set(outcome.id, resultCell);
 
-        row.append(symbolCell, chanceCell, rewardCell, flowCell);
+        row.append(symbolCell, chanceCell, rewardCell, resultCell);
         return row;
     }
 
@@ -267,11 +359,32 @@ export class BalanceCalculator {
         return wrap;
     }
 
+    private applyResults(): void {
+        const results = this.calculate();
+
+        for (const result of results) {
+            const cell = this.resultCells.get(result.id);
+            if (!cell) {
+                continue;
+            }
+
+            const outcome = this.outcomes.find((item) => item.id === result.id);
+            if (!outcome || outcome.rewardAmount === 0) {
+                cell.textContent = `${this.formatNumber(result.hits)} выпадений`;
+                cell.style.color = '#e8e8e8';
+                continue;
+            }
+
+            cell.textContent = `${this.formatNumber(result.totalReward)} ${result.rewardUnit}`;
+            cell.style.color = '#e8e8e8';
+        }
+    }
+
     private styleCell(cell: HTMLElement): void {
         cell.style.cssText = [
             'padding: 10px 8px',
             'border-bottom: 1px solid #2a2a2a',
-            'vertical-align: top',
+            'vertical-align: middle',
             'line-height: 1.35',
             'word-wrap: break-word',
         ].join(';');
@@ -288,5 +401,11 @@ export class BalanceCalculator {
             return 0;
         }
         return Math.min(100, Math.max(0, Math.round(value)));
+    }
+
+    private formatNumber(value: number): string {
+        return Number.isInteger(value)
+            ? String(value)
+            : value.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
     }
 }
