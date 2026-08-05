@@ -5,6 +5,7 @@
     "typescript": "^5.9.2"
   },
   "scripts": {
+    "build-and-publish": "npm run build && npm run publish",
     "build": "npm run build:bundle && npm run build:copy",
     "build:bundle": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs --target=es2022",
     "build:copy": "copyfiles -u 1 \"src/**/!(*.ts)\" dist",
