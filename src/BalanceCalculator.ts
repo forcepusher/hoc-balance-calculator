@@ -97,9 +97,10 @@ export class BalanceCalculator {
         this.root = this.createRoot();
         this.totalEl = this.root.querySelector('[data-total]') as HTMLElement;
         this.rollsInput = this.root.querySelector('[data-rolls]') as HTMLInputElement;
+        this.rollsInput.addEventListener('input', () => this.applyResults());
         parentElement.appendChild(this.root);
         this.renderTable();
-        this.updateTotal();
+        this.refresh();
     }
 
     getOutcomes(): ReadonlyArray<SlotOutcome> {
@@ -128,7 +129,7 @@ export class BalanceCalculator {
             input.value = String(clamped);
         }
 
-        this.updateTotal();
+        this.refresh();
     }
 
     getRewardAmount(id: SlotSymbolId): number {
@@ -152,6 +153,8 @@ export class BalanceCalculator {
         if (input && Number(input.value) !== clamped) {
             input.value = String(clamped);
         }
+
+        this.applyResults();
     }
 
     getTotalChancePercent(): number {
@@ -200,7 +203,7 @@ export class BalanceCalculator {
         ].join(';');
 
         const title = document.createElement('h2');
-        title.textContent = 'Баланс слота';
+        title.textContent = 'Баланс круток слот-машины';
         title.style.cssText = 'margin: 0 0 12px; font-size: 20px; font-weight: 600;';
         root.appendChild(title);
 
@@ -229,21 +232,6 @@ export class BalanceCalculator {
         ].join(';');
         rollsLabel.appendChild(rollsInput);
         controls.appendChild(rollsLabel);
-
-        const calculateButton = document.createElement('button');
-        calculateButton.type = 'button';
-        calculateButton.textContent = 'Calculate';
-        calculateButton.style.cssText = [
-            'padding: 7px 14px',
-            'border: 1px solid #555',
-            'border-radius: 4px',
-            'background: #2a2a2a',
-            'color: #f0f0f0',
-            'font: inherit',
-            'cursor: pointer',
-        ].join(';');
-        calculateButton.addEventListener('click', () => this.applyResults());
-        controls.appendChild(calculateButton);
 
         root.appendChild(controls);
 
@@ -344,7 +332,7 @@ export class BalanceCalculator {
         input.addEventListener('input', () => {
             const parsed = Number(input.value);
             outcome.chancePercent = Number.isFinite(parsed) ? this.clampChance(parsed) : 0;
-            this.updateTotal();
+            this.refresh();
         });
 
         input.addEventListener('blur', () => {
@@ -370,6 +358,7 @@ export class BalanceCalculator {
         input.addEventListener('input', () => {
             const parsed = Number(input.value);
             outcome.rewardAmount = Number.isFinite(parsed) ? this.clampReward(parsed) : 0;
+            this.applyResults();
         });
 
         input.addEventListener('blur', () => {
@@ -434,6 +423,11 @@ export class BalanceCalculator {
             'line-height: 1.35',
             'word-wrap: break-word',
         ].join(';');
+    }
+
+    private refresh(): void {
+        this.updateTotal();
+        this.applyResults();
     }
 
     private updateTotal(): void {

@@ -70,9 +70,10 @@ var BalanceCalculator = class {
     this.root = this.createRoot();
     this.totalEl = this.root.querySelector("[data-total]");
     this.rollsInput = this.root.querySelector("[data-rolls]");
+    this.rollsInput.addEventListener("input", () => this.applyResults());
     parentElement.appendChild(this.root);
     this.renderTable();
-    this.updateTotal();
+    this.refresh();
   }
   getOutcomes() {
     return this.outcomes.map((outcome) => ({ ...outcome }));
@@ -95,7 +96,7 @@ var BalanceCalculator = class {
     if (input && Number(input.value) !== clamped) {
       input.value = String(clamped);
     }
-    this.updateTotal();
+    this.refresh();
   }
   getRewardAmount(id) {
     const outcome = this.outcomes.find((item) => item.id === id);
@@ -115,6 +116,7 @@ var BalanceCalculator = class {
     if (input && Number(input.value) !== clamped) {
       input.value = String(clamped);
     }
+    this.applyResults();
   }
   getTotalChancePercent() {
     return this.outcomes.reduce((sum, outcome) => sum + outcome.chancePercent, 0);
@@ -157,7 +159,7 @@ var BalanceCalculator = class {
       "box-sizing: border-box"
     ].join(";");
     const title = document.createElement("h2");
-    title.textContent = "\u0411\u0430\u043B\u0430\u043D\u0441 \u0441\u043B\u043E\u0442\u0430";
+    title.textContent = "\u0411\u0430\u043B\u0430\u043D\u0441 \u043A\u0440\u0443\u0442\u043E\u043A \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B";
     title.style.cssText = "margin: 0 0 12px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
     const controls = document.createElement("div");
@@ -183,20 +185,6 @@ var BalanceCalculator = class {
     ].join(";");
     rollsLabel.appendChild(rollsInput);
     controls.appendChild(rollsLabel);
-    const calculateButton = document.createElement("button");
-    calculateButton.type = "button";
-    calculateButton.textContent = "Calculate";
-    calculateButton.style.cssText = [
-      "padding: 7px 14px",
-      "border: 1px solid #555",
-      "border-radius: 4px",
-      "background: #2a2a2a",
-      "color: #f0f0f0",
-      "font: inherit",
-      "cursor: pointer"
-    ].join(";");
-    calculateButton.addEventListener("click", () => this.applyResults());
-    controls.appendChild(calculateButton);
     root.appendChild(controls);
     const tableHost = document.createElement("div");
     tableHost.setAttribute("data-table-host", "");
@@ -278,7 +266,7 @@ var BalanceCalculator = class {
     input.addEventListener("input", () => {
       const parsed = Number(input.value);
       outcome.chancePercent = Number.isFinite(parsed) ? this.clampChance(parsed) : 0;
-      this.updateTotal();
+      this.refresh();
     });
     input.addEventListener("blur", () => {
       input.value = String(outcome.chancePercent);
@@ -297,6 +285,7 @@ var BalanceCalculator = class {
     input.addEventListener("input", () => {
       const parsed = Number(input.value);
       outcome.rewardAmount = Number.isFinite(parsed) ? this.clampReward(parsed) : 0;
+      this.applyResults();
     });
     input.addEventListener("blur", () => {
       input.value = String(outcome.rewardAmount);
@@ -351,6 +340,10 @@ var BalanceCalculator = class {
       "line-height: 1.35",
       "word-wrap: break-word"
     ].join(";");
+  }
+  refresh() {
+    this.updateTotal();
+    this.applyResults();
   }
   updateTotal() {
     const total = this.getTotalChancePercent();
