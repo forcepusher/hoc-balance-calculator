@@ -12,7 +12,6 @@ export interface SlotOutcome {
     id: SlotSymbolId;
     symbol: string;
     chancePercent: number;
-    reward: string;
     /** Reward quantity granted per single hit of this symbol. */
     rewardAmount: number;
     rewardUnit: string;
@@ -30,7 +29,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'energy',
         symbol: 'Энергия для рулетки',
         chancePercent: 22,
-        reward: 'Энергия +1',
         rewardAmount: 1,
         rewardUnit: 'Энергия',
     },
@@ -38,7 +36,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'gacha_small',
         symbol: 'Ресурс для гачи (Мало)',
         chancePercent: 20,
-        reward: '5 Астральной Пыли',
         rewardAmount: 5,
         rewardUnit: 'Астральная Пыль',
     },
@@ -46,7 +43,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'pve',
         symbol: 'Символ PvE',
         chancePercent: 15,
-        reward: 'Вход в подземелье/бой',
         rewardAmount: 1,
         rewardUnit: 'PvE вход',
     },
@@ -54,7 +50,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'gold_small',
         symbol: 'Золото (Малое)',
         chancePercent: 15,
-        reward: '50 золота',
         rewardAmount: 50,
         rewardUnit: 'Золото',
     },
@@ -62,7 +57,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'gacha_large',
         symbol: 'Ресурс для гачи (Много)',
         chancePercent: 8,
-        reward: '20 Астральной Пыли',
         rewardAmount: 20,
         rewardUnit: 'Астральная Пыль',
     },
@@ -70,7 +64,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'pvp',
         symbol: 'PvP символ',
         chancePercent: 8,
-        reward: 'Нападение на игрока',
         rewardAmount: 1,
         rewardUnit: 'PvP атака',
     },
@@ -78,7 +71,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'gold_large',
         symbol: 'Золото (Большое)',
         chancePercent: 7,
-        reward: '200 золота',
         rewardAmount: 200,
         rewardUnit: 'Золото',
     },
@@ -86,7 +78,6 @@ const DEFAULT_OUTCOMES: SlotOutcome[] = [
         id: 'empty',
         symbol: 'Ничего (Пустой спин)',
         chancePercent: 5,
-        reward: 'Нет награды',
         rewardAmount: 0,
         rewardUnit: '—',
     },
@@ -98,7 +89,8 @@ export class BalanceCalculator {
     private readonly totalEl: HTMLElement;
     private readonly rollsInput: HTMLInputElement;
     private readonly resultCells = new Map<SlotSymbolId, HTMLElement>();
-    private readonly inputs = new Map<SlotSymbolId, HTMLInputElement>();
+    private readonly chanceInputs = new Map<SlotSymbolId, HTMLInputElement>();
+    private readonly rewardInputs = new Map<SlotSymbolId, HTMLInputElement>();
 
     constructor(parentElement: HTMLElement) {
         this.outcomes = DEFAULT_OUTCOMES.map((outcome) => ({ ...outcome }));
@@ -131,12 +123,35 @@ export class BalanceCalculator {
         const clamped = this.clampChance(chancePercent);
         outcome.chancePercent = clamped;
 
-        const input = this.inputs.get(id);
+        const input = this.chanceInputs.get(id);
         if (input && Number(input.value) !== clamped) {
             input.value = String(clamped);
         }
 
         this.updateTotal();
+    }
+
+    getRewardAmount(id: SlotSymbolId): number {
+        const outcome = this.outcomes.find((item) => item.id === id);
+        if (!outcome) {
+            throw new Error(`Unknown slot symbol: ${id}`);
+        }
+        return outcome.rewardAmount;
+    }
+
+    setRewardAmount(id: SlotSymbolId, rewardAmount: number): void {
+        const outcome = this.outcomes.find((item) => item.id === id);
+        if (!outcome) {
+            throw new Error(`Unknown slot symbol: ${id}`);
+        }
+
+        const clamped = this.clampReward(rewardAmount);
+        outcome.rewardAmount = clamped;
+
+        const input = this.rewardInputs.get(id);
+        if (input && Number(input.value) !== clamped) {
+            input.value = String(clamped);
+        }
     }
 
     getTotalChancePercent(): number {
@@ -200,7 +215,7 @@ export class BalanceCalculator {
         rollsInput.type = 'number';
         rollsInput.min = '0';
         rollsInput.step = '1';
-        rollsInput.value = '100';
+        rollsInput.value = '20';
         rollsInput.setAttribute('data-rolls', '');
         rollsInput.setAttribute('aria-label', 'Количество спинов');
         rollsInput.style.cssText = [
@@ -247,7 +262,8 @@ export class BalanceCalculator {
     private renderTable(): void {
         const host = this.root.querySelector('[data-table-host]') as HTMLElement;
         host.replaceChildren();
-        this.inputs.clear();
+        this.chanceInputs.clear();
+        this.rewardInputs.clear();
         this.resultCells.clear();
 
         const table = document.createElement('table');
@@ -305,8 +321,8 @@ export class BalanceCalculator {
         chanceCell.appendChild(this.createChanceInput(outcome));
 
         const rewardCell = document.createElement('td');
-        rewardCell.textContent = outcome.reward;
         this.styleCell(rewardCell);
+        rewardCell.appendChild(this.createRewardInput(outcome));
 
         const resultCell = document.createElement('td');
         this.styleCell(resultCell);
@@ -322,22 +338,8 @@ export class BalanceCalculator {
         const wrap = document.createElement('label');
         wrap.style.cssText = 'display: inline-flex; align-items: center; gap: 4px;';
 
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = '0';
+        const input = this.createNumberInput(outcome.chancePercent, `Шанс выпадения: ${outcome.symbol}`);
         input.max = '100';
-        input.step = '1';
-        input.value = String(outcome.chancePercent);
-        input.setAttribute('aria-label', `Шанс выпадения: ${outcome.symbol}`);
-        input.style.cssText = [
-            'width: 64px',
-            'padding: 6px 8px',
-            'border: 1px solid #444',
-            'border-radius: 4px',
-            'background: #0f0f0f',
-            'color: #f0f0f0',
-            'font: inherit',
-        ].join(';');
 
         input.addEventListener('input', () => {
             const parsed = Number(input.value);
@@ -349,7 +351,7 @@ export class BalanceCalculator {
             input.value = String(outcome.chancePercent);
         });
 
-        this.inputs.set(outcome.id, input);
+        this.chanceInputs.set(outcome.id, input);
 
         const suffix = document.createElement('span');
         suffix.textContent = '%';
@@ -357,6 +359,50 @@ export class BalanceCalculator {
 
         wrap.append(input, suffix);
         return wrap;
+    }
+
+    private createRewardInput(outcome: SlotOutcome): HTMLElement {
+        const wrap = document.createElement('label');
+        wrap.style.cssText = 'display: inline-flex; align-items: center; gap: 6px;';
+
+        const input = this.createNumberInput(outcome.rewardAmount, `Награда: ${outcome.symbol}`);
+
+        input.addEventListener('input', () => {
+            const parsed = Number(input.value);
+            outcome.rewardAmount = Number.isFinite(parsed) ? this.clampReward(parsed) : 0;
+        });
+
+        input.addEventListener('blur', () => {
+            input.value = String(outcome.rewardAmount);
+        });
+
+        this.rewardInputs.set(outcome.id, input);
+
+        const unit = document.createElement('span');
+        unit.textContent = outcome.rewardUnit;
+        unit.style.color = '#9e9e9e';
+
+        wrap.append(input, unit);
+        return wrap;
+    }
+
+    private createNumberInput(value: number, ariaLabel: string): HTMLInputElement {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.value = String(value);
+        input.setAttribute('aria-label', ariaLabel);
+        input.style.cssText = [
+            'width: 72px',
+            'padding: 6px 8px',
+            'border: 1px solid #444',
+            'border-radius: 4px',
+            'background: #0f0f0f',
+            'color: #f0f0f0',
+            'font: inherit',
+        ].join(';');
+        return input;
     }
 
     private applyResults(): void {
@@ -401,6 +447,13 @@ export class BalanceCalculator {
             return 0;
         }
         return Math.min(100, Math.max(0, Math.round(value)));
+    }
+
+    private clampReward(value: number): number {
+        if (!Number.isFinite(value)) {
+            return 0;
+        }
+        return Math.max(0, Math.round(value));
     }
 
     private formatNumber(value: number): string {
