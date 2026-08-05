@@ -20,7 +20,9 @@
 </head>
 
 <body>
-  <script type="module" src="index.mjs"></script>
+  <script type="module">
+    import(`./index.mjs?t=${Date.now()}`);
+  </script>
 </body>
 
 </html>
