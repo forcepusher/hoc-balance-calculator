@@ -203,7 +203,7 @@ export class BalanceCalculator {
         ].join(';');
 
         const title = document.createElement('h2');
-        title.textContent = 'Баланс круток слот-машины';
+        title.textContent = 'Баланс слот-машины';
         title.style.cssText = 'margin: 0 0 12px; font-size: 20px; font-weight: 600;';
         root.appendChild(title);
 

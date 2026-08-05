@@ -159,7 +159,7 @@ var BalanceCalculator = class {
       "box-sizing: border-box"
     ].join(";");
     const title = document.createElement("h2");
-    title.textContent = "\u0411\u0430\u043B\u0430\u043D\u0441 \u043A\u0440\u0443\u0442\u043E\u043A \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B";
+    title.textContent = "\u0411\u0430\u043B\u0430\u043D\u0441 \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B";
     title.style.cssText = "margin: 0 0 12px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
     const controls = document.createElement("div");
