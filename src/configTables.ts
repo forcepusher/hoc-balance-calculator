@@ -31,7 +31,7 @@ export const CONFIG_TABLES: readonly ConfigTableDef[] = [
     {
         id: 'SlotMachineBaseDrops',
         description: 'Шансы дропа слот-машины',
-        defaultUrl: 'https://docs.google.com/spreadsheets/d/1j1Pc686613peoJ9eY7Dj-8gRsm1I4AUBQtJIyKD1NnU',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1j1Pc686613peoJ9eY7Dj-8gRsm1I4AUBQtJIyKD1NnU?gid=1058081879',
     },
     {
         id: 'GachaBaseDrops',

@@ -1,22 +1,29 @@
 const SPREADSHEET_ID_PATTERN = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i;
+const GID_PATTERN = /(?:[?&#]gid=)([0-9]+)/i;
 
 export function extractSpreadsheetId(raw: string): string | null {
     const match = raw.trim().match(SPREADSHEET_ID_PATTERN);
     return match ? match[1] : null;
 }
 
-/** Canonical document URL with `/edit?...` (and other suffixes) stripped. */
+export function extractGid(raw: string): string | null {
+    const match = raw.trim().match(GID_PATTERN);
+    return match ? match[1] : null;
+}
+
+/** Canonical document URL with `/edit?...` stripped, `gid` kept when present. */
 export function normalizeGoogleSheetUrl(raw: string): string {
     const trimmed = raw.trim();
     const id = extractSpreadsheetId(trimmed);
     if (!id) {
         return trimmed;
     }
-    return canonicalGoogleSheetUrl(id);
+    return canonicalGoogleSheetUrl(id, extractGid(trimmed));
 }
 
-export function canonicalGoogleSheetUrl(spreadsheetId: string): string {
-    return `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+export function canonicalGoogleSheetUrl(spreadsheetId: string, gid?: string | null): string {
+    const base = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+    return gid ? `${base}?gid=${gid}` : base;
 }
 
 /** CSV download URL used when fetching a table. */
@@ -25,7 +32,9 @@ export function toGoogleSheetCsvExportUrl(raw: string): string {
     if (!id) {
         throw new Error('Not a Google Sheets URL');
     }
-    return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv`;
+    const gid = extractGid(raw);
+    const base = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv`;
+    return gid ? `${base}&gid=${gid}` : base;
 }
 
 export function shouldRewritePastedSheetUrl(raw: string): boolean {
@@ -33,11 +42,8 @@ export function shouldRewritePastedSheetUrl(raw: string): boolean {
     if (!extractSpreadsheetId(trimmed)) {
         return false;
     }
-    return /\/edit\b/i.test(trimmed)
-        || /\/export\b/i.test(trimmed)
-        || /\/pubhtml\b/i.test(trimmed)
-        || /[?#]/.test(trimmed)
-        || /\/$/.test(trimmed);
+    const normalized = normalizeGoogleSheetUrl(trimmed);
+    return normalized !== trimmed;
 }
 
 export async function fetchGoogleSheetCsv(sheetUrl: string): Promise<string> {
@@ -62,33 +68,28 @@ export async function fetchGoogleSheetCsv(sheetUrl: string): Promise<string> {
 export interface ParsedCsvTable {
     headers: string[];
     rows: string[][];
+    matrix: string[][];
 }
 
 export function parseCsvTable(text: string): ParsedCsvTable {
-    const matrix = parseCsv(text);
-    const nonempty = matrix.filter((row) => row.some((cell) => cell !== ''));
-    if (nonempty.length === 0) {
+    const matrix = parseCsvMatrix(text).filter((row) => row.some((cell) => cell !== ''));
+    if (matrix.length === 0) {
         throw new Error('CSV is empty');
     }
 
-    const headers = nonempty[0];
-    const rows = nonempty.slice(1).map((row) => {
+    const headers = matrix[0];
+    const rows = matrix.slice(1).map((row) => {
         const padded = row.slice();
         while (padded.length < headers.length) {
             padded.push('');
         }
-        return padded.slice(0, headers.length);
+        return padded;
     });
 
-    return { headers, rows };
+    return { headers, rows, matrix };
 }
 
-function looksLikeHtml(text: string): boolean {
-    const sample = text.slice(0, 256).trim().toLowerCase();
-    return sample.startsWith('<!doctype') || sample.startsWith('<html');
-}
-
-function parseCsv(text: string): string[][] {
+export function parseCsvMatrix(text: string): string[][] {
     const rows: string[][] = [];
     let row: string[] = [];
     let cell = '';
@@ -147,4 +148,9 @@ function parseCsv(text: string): string[][] {
     }
 
     return rows;
+}
+
+function looksLikeHtml(text: string): boolean {
+    const sample = text.slice(0, 256).trim().toLowerCase();
+    return sample.startsWith('<!doctype') || sample.startsWith('<html');
 }
