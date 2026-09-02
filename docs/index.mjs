@@ -1,155 +1,206 @@
-// src/BalanceCalculator.ts
-var DEFAULT_OUTCOMES = [
+// src/configTables.ts
+var CONFIG_TABLES = [
   {
-    id: "energy",
-    symbol: "\u042D\u043D\u0435\u0440\u0433\u0438\u044F \u0434\u043B\u044F \u0440\u0443\u043B\u0435\u0442\u043A\u0438",
-    chancePercent: 22,
-    rewardAmount: 1,
-    rewardUnit: "\u042D\u043D\u0435\u0440\u0433\u0438\u044F"
+    id: "LevelProgression",
+    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043E\u043F\u044B\u0442\u0430, \u0437\u043E\u043B\u043E\u0442\u0430, \u044D\u0441\u0441\u0435\u043D\u0446\u0438\u0438",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/17-fGfxdNr-qoDdt2yuW_g3XAVsMHFdlN4mweEvxICNo"
   },
   {
-    id: "gacha_small",
-    symbol: "\u0420\u0435\u0441\u0443\u0440\u0441 \u0434\u043B\u044F \u0433\u0430\u0447\u0438 (\u041C\u0430\u043B\u043E)",
-    chancePercent: 20,
-    rewardAmount: 5,
-    rewardUnit: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u041F\u044B\u043B\u044C"
+    id: "HeroTierUp",
+    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u0432 \u043E\u0441\u043A\u043E\u043B\u043A\u0430\u0445 \u0438 \u0433\u0435\u0440\u0431\u0430\u0445",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1xk8lw6oW5nvu_9cZ5tPeAGgLmK4OuTu9HoiKwi02jDs"
   },
   {
-    id: "pve",
-    symbol: "\u0421\u0438\u043C\u0432\u043E\u043B PvE",
-    chancePercent: 15,
-    rewardAmount: 1,
-    rewardUnit: "PvE \u0432\u0445\u043E\u0434"
+    id: "SlotMachineBaseDrops",
+    description: "\u0428\u0430\u043D\u0441\u044B \u0434\u0440\u043E\u043F\u0430 \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1j1Pc686613peoJ9eY7Dj-8gRsm1I4AUBQtJIyKD1NnU"
   },
   {
-    id: "gold_small",
-    symbol: "\u0417\u043E\u043B\u043E\u0442\u043E (\u041C\u0430\u043B\u043E\u0435)",
-    chancePercent: 15,
-    rewardAmount: 50,
-    rewardUnit: "\u0417\u043E\u043B\u043E\u0442\u043E"
+    id: "GachaBaseDrops",
+    description: "\u0428\u0430\u043D\u0441\u044B \u0434\u0440\u043E\u043F\u0430",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/12ChBhfVgYk3JbBfrgOznM5VQI0em_x0w0shNzuQYWC8"
   },
   {
-    id: "gacha_large",
-    symbol: "\u0420\u0435\u0441\u0443\u0440\u0441 \u0434\u043B\u044F \u0433\u0430\u0447\u0438 (\u041C\u043D\u043E\u0433\u043E)",
-    chancePercent: 8,
-    rewardAmount: 20,
-    rewardUnit: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u041F\u044B\u043B\u044C"
+    id: "PvpLeaguesConfig",
+    description: "\u041B\u043E\u0433\u0438\u043A\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u044F \u043F\u043E \u043B\u0438\u0433\u0430\u043C; \u043B\u0438\u0433\u0438 \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0432\u0430\u044E\u0442 \u0434\u043E\u0445\u043E\u0434 \u0437\u043E\u043B\u043E\u0442\u0430 \u0441\u043E \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B (GoldIncomeMultiplier)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4"
   },
   {
-    id: "pvp",
-    symbol: "PvP \u0441\u0438\u043C\u0432\u043E\u043B",
-    chancePercent: 8,
-    rewardAmount: 1,
-    rewardUnit: "PvP \u0430\u0442\u0430\u043A\u0430"
+    id: "PvpRewardPool",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 PvP \u0431\u043E\u0439",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE"
   },
   {
-    id: "gold_large",
-    symbol: "\u0417\u043E\u043B\u043E\u0442\u043E (\u0411\u043E\u043B\u044C\u0448\u043E\u0435)",
-    chancePercent: 7,
-    rewardAmount: 200,
-    rewardUnit: "\u0417\u043E\u043B\u043E\u0442\u043E"
+    id: "PvpAdRewardPool",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u0440\u0435\u043A\u043B\u0430\u043C\u0443",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1iQePyPVaX1XKYNIJ-0VGvygkVEeSX9gDaBXBPEsN5hs"
   },
   {
-    id: "empty",
-    symbol: "\u041D\u0438\u0447\u0435\u0433\u043E (\u041F\u0443\u0441\u0442\u043E\u0439 \u0441\u043F\u0438\u043D)",
-    chancePercent: 5,
-    rewardAmount: 0,
-    rewardUnit: "\u2014"
+    id: "PvpChestRewardPool",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0438\u0437 PvP \u0441\u0443\u043D\u0434\u0443\u043A\u0430",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/14gHasZa7vKzxm7UKKJEKvqJU3VZGE-q_1RZnbu0iG-A"
   }
 ];
-var BalanceCalculator = class {
-  outcomes;
+
+// src/googleSheets.ts
+var SPREADSHEET_ID_PATTERN = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i;
+function extractSpreadsheetId(raw) {
+  const match = raw.trim().match(SPREADSHEET_ID_PATTERN);
+  return match ? match[1] : null;
+}
+function normalizeGoogleSheetUrl(raw) {
+  const trimmed = raw.trim();
+  const id = extractSpreadsheetId(trimmed);
+  if (!id) {
+    return trimmed;
+  }
+  return canonicalGoogleSheetUrl(id);
+}
+function canonicalGoogleSheetUrl(spreadsheetId) {
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+}
+function toGoogleSheetCsvExportUrl(raw) {
+  const id = extractSpreadsheetId(raw);
+  if (!id) {
+    throw new Error("Not a Google Sheets URL");
+  }
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv`;
+}
+function shouldRewritePastedSheetUrl(raw) {
+  const trimmed = raw.trim();
+  if (!extractSpreadsheetId(trimmed)) {
+    return false;
+  }
+  return /\/edit\b/i.test(trimmed) || /\/export\b/i.test(trimmed) || /\/pubhtml\b/i.test(trimmed) || /[?#]/.test(trimmed) || /\/$/.test(trimmed);
+}
+async function fetchGoogleSheetCsv(sheetUrl) {
+  const exportUrl = toGoogleSheetCsvExportUrl(sheetUrl);
+  const response = await fetch(exportUrl, {
+    method: "GET",
+    redirect: "follow",
+    credentials: "omit"
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const text = await response.text();
+  if (looksLikeHtml(text)) {
+    throw new Error("Sheet is not publicly accessible (got an HTML page instead of CSV)");
+  }
+  return text;
+}
+function parseCsvTable(text) {
+  const matrix = parseCsv(text);
+  const nonempty = matrix.filter((row) => row.some((cell) => cell !== ""));
+  if (nonempty.length === 0) {
+    throw new Error("CSV is empty");
+  }
+  const headers = nonempty[0];
+  const rows = nonempty.slice(1).map((row) => {
+    const padded = row.slice();
+    while (padded.length < headers.length) {
+      padded.push("");
+    }
+    return padded.slice(0, headers.length);
+  });
+  return { headers, rows };
+}
+function looksLikeHtml(text) {
+  const sample = text.slice(0, 256).trim().toLowerCase();
+  return sample.startsWith("<!doctype") || sample.startsWith("<html");
+}
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  const src = text.replace(/^\uFEFF/, "");
+  const pushCell = () => {
+    row.push(cell.trim());
+    cell = "";
+  };
+  const pushRow = () => {
+    pushCell();
+    if (row.some((value) => value !== "")) {
+      rows.push(row);
+    }
+    row = [];
+  };
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (src[i + 1] === '"') {
+          cell += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cell += ch;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inQuotes = true;
+      continue;
+    }
+    if (ch === ",") {
+      pushCell();
+      continue;
+    }
+    if (ch === "\n") {
+      pushRow();
+      continue;
+    }
+    if (ch === "\r") {
+      continue;
+    }
+    cell += ch;
+  }
+  if (inQuotes || cell !== "" || row.length > 0) {
+    pushRow();
+  }
+  return rows;
+}
+
+// src/ConfigTablesApp.ts
+var ConfigTablesApp = class {
+  parsedTables = /* @__PURE__ */ new Map();
+  rowUi = /* @__PURE__ */ new Map();
+  rowGeneration = /* @__PURE__ */ new Map();
+  dirtyIds = /* @__PURE__ */ new Set();
   root;
-  totalEl;
-  rollsInput;
-  resultCells = /* @__PURE__ */ new Map();
-  chanceInputs = /* @__PURE__ */ new Map();
-  rewardInputs = /* @__PURE__ */ new Map();
+  loadButton;
+  summaryEl;
+  loadGeneration = 0;
   constructor(parentElement) {
-    this.outcomes = DEFAULT_OUTCOMES.map((outcome) => ({ ...outcome }));
     this.root = this.createRoot();
-    this.totalEl = this.root.querySelector("[data-total]");
-    this.rollsInput = this.root.querySelector("[data-rolls]");
-    this.rollsInput.addEventListener("input", () => this.applyResults());
+    this.loadButton = this.root.querySelector("[data-load-all]");
+    this.summaryEl = this.root.querySelector("[data-summary]");
     parentElement.appendChild(this.root);
-    this.renderTable();
-    this.refresh();
+    this.bind();
+    void this.loadAll();
   }
-  getOutcomes() {
-    return this.outcomes.map((outcome) => ({ ...outcome }));
-  }
-  getChancePercent(id) {
-    const outcome = this.outcomes.find((item) => item.id === id);
-    if (!outcome) {
-      throw new Error(`Unknown slot symbol: ${id}`);
+  getTable(id) {
+    const table = this.parsedTables.get(id);
+    if (!table) {
+      return void 0;
     }
-    return outcome.chancePercent;
+    return {
+      headers: [...table.headers],
+      rows: table.rows.map((row) => [...row])
+    };
   }
-  setChancePercent(id, chancePercent) {
-    const outcome = this.outcomes.find((item) => item.id === id);
-    if (!outcome) {
-      throw new Error(`Unknown slot symbol: ${id}`);
-    }
-    const clamped = this.clampChance(chancePercent);
-    outcome.chancePercent = clamped;
-    const input = this.chanceInputs.get(id);
-    if (input && Number(input.value) !== clamped) {
-      input.value = String(clamped);
-    }
-    this.refresh();
-  }
-  getRewardAmount(id) {
-    const outcome = this.outcomes.find((item) => item.id === id);
-    if (!outcome) {
-      throw new Error(`Unknown slot symbol: ${id}`);
-    }
-    return outcome.rewardAmount;
-  }
-  setRewardAmount(id, rewardAmount) {
-    const outcome = this.outcomes.find((item) => item.id === id);
-    if (!outcome) {
-      throw new Error(`Unknown slot symbol: ${id}`);
-    }
-    const clamped = this.clampReward(rewardAmount);
-    outcome.rewardAmount = clamped;
-    const input = this.rewardInputs.get(id);
-    if (input && Number(input.value) !== clamped) {
-      input.value = String(clamped);
-    }
-    this.applyResults();
-  }
-  getTotalChancePercent() {
-    return this.outcomes.reduce((sum, outcome) => sum + outcome.chancePercent, 0);
-  }
-  getRollCount() {
-    const parsed = Number(this.rollsInput.value);
-    if (!Number.isFinite(parsed)) {
-      return 0;
-    }
-    return Math.max(0, Math.floor(parsed));
-  }
-  /** Expected hits and reward totals for N rolls, weighted by chance %. */
-  calculate(rolls = this.getRollCount()) {
-    const safeRolls = Math.max(0, Math.floor(rolls));
-    const totalChance = this.getTotalChancePercent();
-    return this.outcomes.map((outcome) => {
-      const probability = totalChance > 0 ? outcome.chancePercent / totalChance : 0;
-      const hits = safeRolls * probability;
-      const totalReward = hits * outcome.rewardAmount;
-      return {
-        id: outcome.id,
-        hits,
-        totalReward,
-        rewardUnit: outcome.rewardUnit
-      };
+  bind() {
+    this.loadButton.addEventListener("click", () => {
+      void this.loadAll();
     });
   }
   createRoot() {
     const root = document.createElement("div");
     root.style.cssText = [
       "width: min(960px, 96vw)",
-      "max-height: 92vh",
-      "overflow: auto",
       "color: #e8e8e8",
       "font-family: Segoe UI, Tahoma, sans-serif",
       "background: #141414",
@@ -159,216 +210,190 @@ var BalanceCalculator = class {
       "box-sizing: border-box"
     ].join(";");
     const title = document.createElement("h2");
-    title.textContent = "\u0411\u0430\u043B\u0430\u043D\u0441 \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B";
-    title.style.cssText = "margin: 0 0 12px; font-size: 20px; font-weight: 600;";
+    title.textContent = "HoC Balance";
+    title.style.cssText = "margin: 0 0 8px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
+    const intro = document.createElement("p");
+    intro.textContent = "\u0412\u0445\u043E\u0434\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435. \u0423\u0442\u0438\u043B\u0438\u0442\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u043F\u0430\u0440\u0441\u0438\u0442 \u0442\u0435\u043A\u0443\u0449\u0438\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u044B\u0435 \u0442\u0430\u0431\u043B\u0438\u0446\u044B \u043F\u0440\u043E\u0435\u043A\u0442\u0430:";
+    intro.style.cssText = "margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;";
+    root.appendChild(intro);
     const controls = document.createElement("div");
     controls.style.cssText = "display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px;";
-    const rollsLabel = document.createElement("label");
-    rollsLabel.style.cssText = "display: inline-flex; align-items: center; gap: 8px; font-size: 14px;";
-    rollsLabel.append("\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0441\u043F\u0438\u043D\u043E\u0432:");
-    const rollsInput = document.createElement("input");
-    rollsInput.type = "number";
-    rollsInput.min = "0";
-    rollsInput.step = "1";
-    rollsInput.value = "20";
-    rollsInput.setAttribute("data-rolls", "");
-    rollsInput.setAttribute("aria-label", "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0441\u043F\u0438\u043D\u043E\u0432");
-    rollsInput.style.cssText = [
-      "width: 100px",
-      "padding: 6px 8px",
-      "border: 1px solid #444",
+    const loadButton = document.createElement("button");
+    loadButton.type = "button";
+    loadButton.textContent = "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0442\u0430\u0431\u043B\u0438\u0446\u044B";
+    loadButton.setAttribute("data-load-all", "");
+    loadButton.style.cssText = [
+      "padding: 8px 12px",
+      "border: 1px solid #555",
       "border-radius: 4px",
-      "background: #0f0f0f",
+      "background: #1f1f1f",
       "color: #f0f0f0",
-      "font: inherit"
+      "font: inherit",
+      "cursor: pointer"
     ].join(";");
-    rollsLabel.appendChild(rollsInput);
-    controls.appendChild(rollsLabel);
+    controls.appendChild(loadButton);
+    const summary = document.createElement("span");
+    summary.setAttribute("data-summary", "");
+    summary.style.cssText = "font-size: 13px; color: #9e9e9e;";
+    controls.appendChild(summary);
     root.appendChild(controls);
-    const tableHost = document.createElement("div");
-    tableHost.setAttribute("data-table-host", "");
-    root.appendChild(tableHost);
-    const footer = document.createElement("div");
-    footer.style.cssText = "margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 14px;";
-    footer.innerHTML = "<span>\u0421\u0443\u043C\u043C\u0430 \u0448\u0430\u043D\u0441\u043E\u0432:</span><strong data-total>0%</strong>";
-    root.appendChild(footer);
+    const list = document.createElement("div");
+    list.style.cssText = "display: flex; flex-direction: column; gap: 12px;";
+    for (const table of CONFIG_TABLES) {
+      list.appendChild(this.createTableRow(table.id, table.description, table.defaultUrl));
+    }
+    root.appendChild(list);
     return root;
   }
-  renderTable() {
-    const host = this.root.querySelector("[data-table-host]");
-    host.replaceChildren();
-    this.chanceInputs.clear();
-    this.rewardInputs.clear();
-    this.resultCells.clear();
-    const table = document.createElement("table");
-    table.style.cssText = [
-      "width: 100%",
-      "border-collapse: collapse",
-      "font-size: 13px",
-      "table-layout: fixed"
+  createTableRow(id, description, defaultUrl) {
+    const row = document.createElement("div");
+    row.style.cssText = [
+      "display: flex",
+      "flex-direction: column",
+      "gap: 6px",
+      "padding: 10px 10px 12px",
+      "border: 1px solid #2a2a2a",
+      "border-radius: 6px",
+      "background: #181818"
     ].join(";");
-    const colgroup = document.createElement("colgroup");
-    for (const width of ["28%", "14%", "26%", "32%"]) {
-      const col = document.createElement("col");
-      col.style.width = width;
-      colgroup.appendChild(col);
-    }
-    table.appendChild(colgroup);
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    for (const label of ["\u0421\u0438\u043C\u0432\u043E\u043B \u043D\u0430 \u0441\u043B\u043E\u0442\u0435", "\u0428\u0430\u043D\u0441 \u0432\u044B\u043F\u0430\u0434\u0435\u043D\u0438\u044F", "\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0438\u0433\u0440\u043E\u043A\u0430", "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442"]) {
-      const th = document.createElement("th");
-      th.textContent = label;
-      th.style.cssText = [
-        "text-align: left",
-        "padding: 10px 8px",
-        "border-bottom: 1px solid #3a3a3a",
-        "color: #bdbdbd",
-        "font-weight: 600",
-        "background: #1c1c1c"
-      ].join(";");
-      headerRow.appendChild(th);
-    }
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-    const tbody = document.createElement("tbody");
-    for (const outcome of this.outcomes) {
-      tbody.appendChild(this.createRow(outcome));
-    }
-    table.appendChild(tbody);
-    host.appendChild(table);
-  }
-  createRow(outcome) {
-    const row = document.createElement("tr");
-    const symbolCell = document.createElement("td");
-    symbolCell.textContent = outcome.symbol;
-    this.styleCell(symbolCell);
-    const chanceCell = document.createElement("td");
-    this.styleCell(chanceCell);
-    chanceCell.appendChild(this.createChanceInput(outcome));
-    const rewardCell = document.createElement("td");
-    this.styleCell(rewardCell);
-    rewardCell.appendChild(this.createRewardInput(outcome));
-    const resultCell = document.createElement("td");
-    this.styleCell(resultCell);
-    resultCell.textContent = "\u2014";
-    resultCell.style.color = "#9e9e9e";
-    this.resultCells.set(outcome.id, resultCell);
-    row.append(symbolCell, chanceCell, rewardCell, resultCell);
-    return row;
-  }
-  createChanceInput(outcome) {
-    const wrap = document.createElement("label");
-    wrap.style.cssText = "display: inline-flex; align-items: center; gap: 4px;";
-    const input = this.createNumberInput(outcome.chancePercent, `\u0428\u0430\u043D\u0441 \u0432\u044B\u043F\u0430\u0434\u0435\u043D\u0438\u044F: ${outcome.symbol}`);
-    input.max = "100";
-    input.addEventListener("input", () => {
-      const parsed = Number(input.value);
-      outcome.chancePercent = Number.isFinite(parsed) ? this.clampChance(parsed) : 0;
-      this.refresh();
-    });
-    input.addEventListener("blur", () => {
-      input.value = String(outcome.chancePercent);
-    });
-    this.chanceInputs.set(outcome.id, input);
-    const suffix = document.createElement("span");
-    suffix.textContent = "%";
-    suffix.style.color = "#9e9e9e";
-    wrap.append(input, suffix);
-    return wrap;
-  }
-  createRewardInput(outcome) {
-    const wrap = document.createElement("label");
-    wrap.style.cssText = "display: inline-flex; align-items: center; gap: 6px;";
-    const input = this.createNumberInput(outcome.rewardAmount, `\u041D\u0430\u0433\u0440\u0430\u0434\u0430: ${outcome.symbol}`);
-    input.addEventListener("input", () => {
-      const parsed = Number(input.value);
-      outcome.rewardAmount = Number.isFinite(parsed) ? this.clampReward(parsed) : 0;
-      this.applyResults();
-    });
-    input.addEventListener("blur", () => {
-      input.value = String(outcome.rewardAmount);
-    });
-    this.rewardInputs.set(outcome.id, input);
-    const unit = document.createElement("span");
-    unit.textContent = outcome.rewardUnit;
-    unit.style.color = "#9e9e9e";
-    wrap.append(input, unit);
-    return wrap;
-  }
-  createNumberInput(value, ariaLabel) {
+    const header = document.createElement("div");
+    header.style.cssText = "display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;";
+    const nameLink = document.createElement("a");
+    nameLink.textContent = id;
+    nameLink.href = defaultUrl;
+    nameLink.target = "_blank";
+    nameLink.rel = "noopener noreferrer";
+    nameLink.style.cssText = "color: #7eb8ff; font-weight: 600; font-size: 14px; text-decoration: none;";
+    header.appendChild(nameLink);
+    const desc = document.createElement("span");
+    desc.textContent = description;
+    desc.style.cssText = "font-size: 13px; color: #9e9e9e;";
+    header.appendChild(desc);
+    row.appendChild(header);
     const input = document.createElement("input");
-    input.type = "number";
-    input.min = "0";
-    input.step = "1";
-    input.value = String(value);
-    input.setAttribute("aria-label", ariaLabel);
+    input.type = "url";
+    input.value = defaultUrl;
+    input.spellcheck = false;
+    input.setAttribute("aria-label", `${id} Google Sheets URL`);
+    input.placeholder = "https://docs.google.com/spreadsheets/d/\u2026";
     input.style.cssText = [
-      "width: 72px",
-      "padding: 6px 8px",
+      "width: 100%",
+      "box-sizing: border-box",
+      "padding: 8px 10px",
       "border: 1px solid #444",
       "border-radius: 4px",
       "background: #0f0f0f",
       "color: #f0f0f0",
-      "font: inherit"
+      "font: inherit",
+      "font-size: 13px"
     ].join(";");
-    return input;
-  }
-  applyResults() {
-    const results = this.calculate();
-    for (const result of results) {
-      const cell = this.resultCells.get(result.id);
-      if (!cell) {
-        continue;
+    input.addEventListener("input", () => {
+      this.rewriteUrlIfNeeded(input, false);
+      nameLink.href = normalizeGoogleSheetUrl(input.value) || "#";
+      this.parsedTables.delete(id);
+      this.dirtyIds.add(id);
+      this.setStatus(id, "\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u043E \u2014 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0441\u044F \u043F\u0440\u0438 \u043F\u043E\u0442\u0435\u0440\u0435 \u0444\u043E\u043A\u0443\u0441\u0430", "#bdbdbd");
+    });
+    input.addEventListener("blur", () => {
+      this.rewriteUrlIfNeeded(input, true);
+      nameLink.href = normalizeGoogleSheetUrl(input.value) || "#";
+      if (this.dirtyIds.has(id)) {
+        this.dirtyIds.delete(id);
+        void this.loadOne(id);
       }
-      const outcome = this.outcomes.find((item) => item.id === result.id);
-      if (!outcome || outcome.rewardAmount === 0) {
-        cell.textContent = `${this.formatNumber(result.hits)} \u0432\u044B\u043F\u0430\u0434\u0435\u043D\u0438\u0439`;
-        cell.style.color = "#e8e8e8";
-        continue;
+    });
+    row.appendChild(input);
+    const status = document.createElement("div");
+    status.style.cssText = "font-size: 12px; color: #9e9e9e; min-height: 1.2em;";
+    row.appendChild(status);
+    this.rowUi.set(id, { input, status, openLink: nameLink });
+    return row;
+  }
+  rewriteUrlIfNeeded(input, force) {
+    const raw = input.value;
+    if (!force && !shouldRewritePastedSheetUrl(raw)) {
+      return;
+    }
+    const normalized = normalizeGoogleSheetUrl(raw);
+    if (normalized !== raw) {
+      input.value = normalized;
+    }
+  }
+  async loadAll() {
+    const generation = ++this.loadGeneration;
+    this.loadButton.disabled = true;
+    this.summaryEl.textContent = "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026";
+    this.summaryEl.style.color = "#9e9e9e";
+    const results = await Promise.all(
+      CONFIG_TABLES.map((table) => this.loadOne(table.id, generation))
+    );
+    if (generation !== this.loadGeneration) {
+      return;
+    }
+    const loaded = results.filter(Boolean).length;
+    this.loadButton.disabled = false;
+    this.summaryEl.textContent = `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${loaded} / ${CONFIG_TABLES.length}`;
+    this.summaryEl.style.color = loaded === CONFIG_TABLES.length ? "#7dcea0" : "#e74c3c";
+  }
+  async loadOne(id, batchGeneration) {
+    const ui = this.rowUi.get(id);
+    if (!ui) {
+      return false;
+    }
+    const rowGeneration = (this.rowGeneration.get(id) ?? 0) + 1;
+    this.rowGeneration.set(id, rowGeneration);
+    this.dirtyIds.delete(id);
+    this.rewriteUrlIfNeeded(ui.input, true);
+    const url = normalizeGoogleSheetUrl(ui.input.value);
+    ui.input.value = url;
+    ui.openLink.href = url || "#";
+    this.setStatus(id, "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026", "#9e9e9e");
+    this.parsedTables.delete(id);
+    try {
+      const csv = await fetchGoogleSheetCsv(url);
+      if (!this.isLoadCurrent(id, rowGeneration, batchGeneration)) {
+        return false;
       }
-      cell.textContent = `${this.formatNumber(result.totalReward)} ${result.rewardUnit}`;
-      cell.style.color = "#e8e8e8";
+      const parsed = parseCsvTable(csv);
+      this.parsedTables.set(id, parsed);
+      const headerPreview = parsed.headers.filter((header) => header !== "").join(", ");
+      this.setStatus(
+        id,
+        `${parsed.rows.length} \u0441\u0442\u0440\u043E\u043A \xB7 ${headerPreview}`,
+        "#7dcea0"
+      );
+      return true;
+    } catch (error) {
+      if (!this.isLoadCurrent(id, rowGeneration, batchGeneration)) {
+        return false;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      this.setStatus(id, `\u041E\u0448\u0438\u0431\u043A\u0430: ${message}`, "#e74c3c");
+      return false;
     }
   }
-  styleCell(cell) {
-    cell.style.cssText = [
-      "padding: 10px 8px",
-      "border-bottom: 1px solid #2a2a2a",
-      "vertical-align: middle",
-      "line-height: 1.35",
-      "word-wrap: break-word"
-    ].join(";");
-  }
-  refresh() {
-    this.updateTotal();
-    this.applyResults();
-  }
-  updateTotal() {
-    const total = this.getTotalChancePercent();
-    this.totalEl.textContent = `${total}%`;
-    this.totalEl.style.color = total === 100 ? "#7dcea0" : "#e74c3c";
-  }
-  clampChance(value) {
-    if (!Number.isFinite(value)) {
-      return 0;
+  isLoadCurrent(id, rowGeneration, batchGeneration) {
+    if (this.rowGeneration.get(id) !== rowGeneration) {
+      return false;
     }
-    return Math.min(100, Math.max(0, Math.round(value)));
-  }
-  clampReward(value) {
-    if (!Number.isFinite(value)) {
-      return 0;
+    if (batchGeneration !== void 0 && batchGeneration !== this.loadGeneration) {
+      return false;
     }
-    return Math.max(0, Math.round(value));
+    return true;
   }
-  formatNumber(value) {
-    return Number.isInteger(value) ? String(value) : value.toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+  setStatus(id, text, color) {
+    const ui = this.rowUi.get(id);
+    if (!ui) {
+      return;
+    }
+    ui.status.textContent = text;
+    ui.status.style.color = color;
   }
 };
 
 // src/index.ts
 var applicationViewportDiv = document.createElement("div");
-applicationViewportDiv.style = "width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden;";
+applicationViewportDiv.style = "width: 100vw; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 24px 0; box-sizing: border-box; position: relative;";
 document.body.appendChild(applicationViewportDiv);
-var balanceCalculator = new BalanceCalculator(applicationViewportDiv);
+new ConfigTablesApp(applicationViewportDiv);
