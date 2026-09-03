@@ -6,7 +6,7 @@ import {
     shouldRewritePastedSheetUrl,
     type ParsedCsvTable,
 } from './googleSheets.js';
-import { parseGameConfig } from './sim/parseGameConfig.js';
+import { describeChestParse, parseChest, parseGameConfig } from './sim/parseGameConfig.js';
 import { runSimulation, simulationReportCsv, type SimResult } from './sim/simulate.js';
 import { DEFAULT_SIM_PARAMS, RESOURCE_LABELS, type ResourceId, type SimParams } from './sim/types.js';
 
@@ -349,8 +349,7 @@ export class ConfigTablesApp {
             }
             const parsed = parseCsvTable(csv);
             this.parsedTables.set(id, parsed);
-            const headerPreview = parsed.headers.filter((header) => header !== '').join(', ');
-            this.setStatus(id, `${parsed.rows.length} строк · ${headerPreview}`, '#7dcea0');
+            this.setStatus(id, this.describeParsedTable(id, parsed), '#7dcea0');
             return true;
         } catch (error) {
             if (!this.isLoadCurrent(id, rowGeneration, batchGeneration)) {
@@ -360,6 +359,14 @@ export class ConfigTablesApp {
             this.setStatus(id, `Ошибка: ${message}`, '#e74c3c');
             return false;
         }
+    }
+
+    private describeParsedTable(id: ConfigTableId, parsed: ParsedCsvTable): string {
+        if (id === 'PvpChestRewardPool') {
+            return describeChestParse(parseChest(parsed));
+        }
+        const headerPreview = parsed.headers.filter((header) => header !== '').join(', ');
+        return `${parsed.rows.length} строк · ${headerPreview}`;
     }
 
     private isLoadCurrent(id: ConfigTableId, rowGeneration: number, batchGeneration?: number): boolean {

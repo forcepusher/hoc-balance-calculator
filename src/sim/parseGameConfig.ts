@@ -230,7 +230,7 @@ function parseAds(table: ParsedCsvTable): AdConfig {
     return { drops, leagueMultiplier };
 }
 
-function parseChest(table: ParsedCsvTable): ChestConfig {
+export function parseChest(table: ParsedCsvTable): ChestConfig {
     const drops: WeightedDrop[] = [];
     const dropCounts: Array<{ count: number; probability: number }> = [];
     const leagueMultiplier = new Map<string, number>();
@@ -284,6 +284,16 @@ function parseChest(table: ParsedCsvTable): ChestConfig {
         dropCounts.push({ count: 1, probability: 1 });
     }
     return { drops, dropCounts, leagueMultiplier };
+}
+
+export function describeChestParse(chest: ChestConfig): string {
+    const expectedItems = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
+    return [
+        `${chest.drops.length} дропов`,
+        `${chest.dropCounts.length} DropCount`,
+        `${chest.leagueMultiplier.size} лиг`,
+        `EV предметов ${expectedItems.toFixed(2)}`,
+    ].join(' · ');
 }
 
 function columnIndex(headers: string[]): (aliases: string[]) => number {

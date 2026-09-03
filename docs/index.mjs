@@ -415,6 +415,15 @@ function parseChest(table) {
   }
   return { drops, dropCounts, leagueMultiplier };
 }
+function describeChestParse(chest) {
+  const expectedItems = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
+  return [
+    `${chest.drops.length} \u0434\u0440\u043E\u043F\u043E\u0432`,
+    `${chest.dropCounts.length} DropCount`,
+    `${chest.leagueMultiplier.size} \u043B\u0438\u0433`,
+    `EV \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u043E\u0432 ${expectedItems.toFixed(2)}`
+  ].join(" \xB7 ");
+}
 function columnIndex(headers) {
   const normalized = headers.map(normalizeHeader);
   return (aliases) => {
@@ -1290,8 +1299,7 @@ var ConfigTablesApp = class {
       }
       const parsed = parseCsvTable(csv);
       this.parsedTables.set(id, parsed);
-      const headerPreview = parsed.headers.filter((header) => header !== "").join(", ");
-      this.setStatus(id, `${parsed.rows.length} \u0441\u0442\u0440\u043E\u043A \xB7 ${headerPreview}`, "#7dcea0");
+      this.setStatus(id, this.describeParsedTable(id, parsed), "#7dcea0");
       return true;
     } catch (error) {
       if (!this.isLoadCurrent(id, rowGeneration, batchGeneration)) {
@@ -1301,6 +1309,13 @@ var ConfigTablesApp = class {
       this.setStatus(id, `\u041E\u0448\u0438\u0431\u043A\u0430: ${message}`, "#e74c3c");
       return false;
     }
+  }
+  describeParsedTable(id, parsed) {
+    if (id === "PvpChestRewardPool") {
+      return describeChestParse(parseChest(parsed));
+    }
+    const headerPreview = parsed.headers.filter((header) => header !== "").join(", ");
+    return `${parsed.rows.length} \u0441\u0442\u0440\u043E\u043A \xB7 ${headerPreview}`;
   }
   isLoadCurrent(id, rowGeneration, batchGeneration) {
     if (this.rowGeneration.get(id) !== rowGeneration) {
