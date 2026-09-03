@@ -182,6 +182,10 @@ function addItem(
         }
     }
 
+    const essenceMult = affectedByLeague
+        ? (source === 'goldExp' ? league.goldIncomeMultiplier : extraLeagueMult)
+        : 1;
+
     if (kind === 'gold') {
         out.gold += amount * goldMult;
     } else if (kind === 'exp') {
@@ -189,7 +193,7 @@ function addItem(
     } else if (kind === 'dust') {
         out.dust += amount;
     } else if (kind === 'essence') {
-        out.essence += amount;
+        out.essence += amount * essenceMult;
     }
 }
 
