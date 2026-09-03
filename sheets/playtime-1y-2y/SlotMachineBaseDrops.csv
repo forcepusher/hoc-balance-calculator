@@ -1,0 +1,10 @@
+Key,Probability (Шанс),ItemType,Value,IsJackpot,IsAffectedByLeague
+Empty,0.0100,None,0,FALSE,FALSE
+GoldSmall,0.3600,Gold,100,FALSE,TRUE
+GoldBig,0.1000,Gold,500,TRUE,TRUE
+AstralDustSmall,0.2200,AstralDust,10,FALSE,FALSE
+AstralDustBig,0.0400,AstralDust,50,TRUE,FALSE
+Energy,0.1000,Energy,1,FALSE,FALSE
+Attack,0.0800,Pvp,1,FALSE,FALSE
+Raid,0.0700,Pve,1,FALSE,FALSE
+Chest,0.0200,Chest,4,TRUE,FALSE
