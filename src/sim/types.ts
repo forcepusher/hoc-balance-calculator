@@ -162,6 +162,14 @@ export const DEFAULT_SIM_PARAMS: SimParams = {
     factionCount: 4,
     gachaPity: 80,
     maxDays: 10000,
-    checkpoints: [20, 60, 240],
+    checkpoints: checkpointsEvery(20, 240),
     leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140],
 };
+
+function checkpointsEvery(step: number, maxLevel: number): number[] {
+    const levels: number[] = [];
+    for (let level = step; level <= maxLevel; level += step) {
+        levels.push(level);
+    }
+    return levels;
+}

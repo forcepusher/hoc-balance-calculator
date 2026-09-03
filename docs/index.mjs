@@ -547,9 +547,16 @@ var DEFAULT_SIM_PARAMS = {
   factionCount: 4,
   gachaPity: 80,
   maxDays: 1e4,
-  checkpoints: [20, 60, 240],
+  checkpoints: checkpointsEvery(20, 240),
   leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140]
 };
+function checkpointsEvery(step, maxLevel) {
+  const levels = [];
+  for (let level = step; level <= maxLevel; level += step) {
+    levels.push(level);
+  }
+  return levels;
+}
 
 // src/sim/income.ts
 function energyReturnChance(slotDrops) {
@@ -838,8 +845,9 @@ function runSimulation(config, params) {
       }
     }
   }
-  if (maxLevel < Math.max(...params.checkpoints)) {
-    notes.push(`LevelProgression \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430 ${maxLevel}, \u0447\u0435\u043A\u043F\u043E\u0438\u043D\u0442 240 \u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u0439 \u0442\u0430\u0431\u043B\u0438\u0446\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0438\u0436\u0438\u043C.`);
+  const unreachable = params.checkpoints.filter((level) => level > maxLevel);
+  if (unreachable.length > 0) {
+    notes.push(`LevelProgression \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430 ${maxLevel}, \u043D\u0435\u0434\u043E\u0441\u0442\u0438\u0436\u0438\u043C\u044B: ${unreachable.join(", ")}.`);
   }
   const stalls = [...stallAcc.values()].sort((a, b) => b.days - a.days);
   const league = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];

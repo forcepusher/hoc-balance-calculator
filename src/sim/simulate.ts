@@ -140,8 +140,9 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
         }
     }
 
-    if (maxLevel < Math.max(...params.checkpoints)) {
-        notes.push(`LevelProgression заканчивается на ${maxLevel}, чекпоинт 240 в текущей таблице недостижим.`);
+    const unreachable = params.checkpoints.filter((level) => level > maxLevel);
+    if (unreachable.length > 0) {
+        notes.push(`LevelProgression заканчивается на ${maxLevel}, недостижимы: ${unreachable.join(', ')}.`);
     }
 
     const stalls = [...stallAcc.values()].sort((a, b) => b.days - a.days);
