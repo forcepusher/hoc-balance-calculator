@@ -17,17 +17,17 @@ var CONFIG_TABLES = [
   },
   {
     id: "GachaBaseDrops",
-    description: "\u0428\u0430\u043D\u0441\u044B \u0434\u0440\u043E\u043F\u0430",
+    description: "HeroSTier \u2192 A-\u0440\u0430\u043D\u0433, HeroATier \u2192 S-\u0440\u0430\u043D\u0433 + pity",
     defaultUrl: "https://docs.google.com/spreadsheets/d/12ChBhfVgYk3JbBfrgOznM5VQI0em_x0w0shNzuQYWC8"
   },
   {
     id: "PvpLeaguesConfig",
-    description: "\u041B\u043E\u0433\u0438\u043A\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u044F \u043F\u043E \u043B\u0438\u0433\u0430\u043C; \u043B\u0438\u0433\u0438 \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0432\u0430\u044E\u0442 \u0434\u043E\u0445\u043E\u0434 \u0437\u043E\u043B\u043E\u0442\u0430 \u0441\u043E \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B (GoldIncomeMultiplier)",
+    description: "\u0420\u0435\u0439\u0442\u0438\u043D\u0433 \u043B\u0438\u0433 (Min/Max/Win/Loss) \u0438 GoldIncomeMultiplier \u0434\u043B\u044F \u0441\u043B\u043E\u0442\u043E\u0432",
     defaultUrl: "https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4"
   },
   {
     id: "PvpRewardPool",
-    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 PvP \u0431\u043E\u0439",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 PvP (\u043F\u043E\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0432 \u043A\u043B\u0438\u0435\u043D\u0442\u0435 \u0431\u0435\u0437 \u0434\u0440\u043E\u043F\u0430)",
     defaultUrl: "https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE"
   },
   {
@@ -203,12 +203,14 @@ function parseLevelProgression(table) {
   const levels = table.rows.map((row) => {
     const level = parseNumber(row[levelI]);
     const isBreakthrough = parseBool(row[btI]);
+    const expCost = parseNumber(row[expI]);
+    const essenceCost = parseNumber(row[essI]);
     return {
       level,
-      expCost: parseNumber(row[expI]),
+      expCost: isBreakthrough ? 0 : expCost,
       goldCost: parseNumber(row[goldI]),
       isBreakthrough,
-      essenceCost: parseNumber(row[essI]),
+      essenceCost: isBreakthrough ? essenceCost : 0,
       statMultiplier: parseNumber(row[statI], isBreakthrough ? NaN : 1)
     };
   }).filter((row) => row.level > 0);
@@ -271,10 +273,10 @@ function parseGacha(table) {
     }
     byKey.set(key.toLowerCase(), parseNumber(row[pI]));
   }
-  const sHero = byKey.get("herostier") ?? byKey.get("s") ?? 0.03;
-  const aHero = byKey.get("heroatier") ?? byKey.get("a") ?? 0.22;
+  const aRankHero = byKey.get("herostier") ?? byKey.get("s") ?? 0.03;
+  const sRankHero = byKey.get("heroatier") ?? byKey.get("a") ?? 0.22;
   const arms = byKey.get("arms") ?? 0.75;
-  return { sHero, aHero, arms };
+  return { aRankHero, sRankHero, arms };
 }
 function parseLeagues(table) {
   const col = columnIndex(table.headers);
@@ -284,8 +286,9 @@ function parseLeagues(table) {
   const maxI = optionalColumn(table.headers, ["maxrating"]);
   const winI = optionalColumn(table.headers, ["winrating"]);
   const lossI = optionalColumn(table.headers, ["lossrating"]);
-  const goldI = col(["goldincomemultiplier"]);
-  const expI = col(["expincomemultiplier"]);
+  const resetI = optionalColumn(table.headers, ["resetrating"]);
+  const goldI = optionalColumn(table.headers, ["goldincomemultiplier"]);
+  const expI = optionalColumn(table.headers, ["expincomemultiplier"]);
   const tierI = optionalColumn(table.headers, ["slotmachinetier"]);
   const rows = table.rows.map((row) => ({
     name: row[nameI] ?? "",
@@ -294,14 +297,15 @@ function parseLeagues(table) {
     maxRating: maxI >= 0 ? parseNumber(row[maxI]) : 0,
     winRating: winI >= 0 ? parseNumber(row[winI]) : 0,
     lossRating: lossI >= 0 ? parseNumber(row[lossI]) : 0,
-    goldIncomeMultiplier: parseNumber(row[goldI], 1),
-    expIncomeMultiplier: parseNumber(row[expI], 1),
+    resetRating: resetI >= 0 ? parseNumber(row[resetI]) : 0,
+    goldIncomeMultiplier: goldI >= 0 ? parseNumber(row[goldI], 1) : 1,
+    expIncomeMultiplier: expI >= 0 ? parseNumber(row[expI], 1) : 1,
     slotMachineTier: tierI >= 0 ? row[tierI] ?? "" : ""
   })).filter((row) => row.id !== "");
   if (rows.length === 0) {
     throw new Error("PvpLeaguesConfig: \u043D\u0435\u0442 \u043B\u0438\u0433");
   }
-  return rows;
+  return rows.sort((a, b) => a.minRating - b.minRating);
 }
 function parsePvpRewards(table) {
   const col = columnIndex(table.headers);
@@ -465,38 +469,90 @@ function parseBool(raw) {
   return value === "true" || value === "1" || value === "yes";
 }
 
+// src/sim/ranks.ts
+var ALIASES = {
+  a: 1,
+  aplus: 2,
+  "a+": 2,
+  s: 3,
+  splus: 4,
+  "s+": 4,
+  ss: 5,
+  ssplus: 6,
+  "ss+": 6,
+  mythic: 7,
+  mythical: 7,
+  "mythic+": 8,
+  "mythical+": 8,
+  mythicalplus: 8,
+  supreme: 9,
+  "supreme+": 10,
+  supremeplus: 10
+};
+function parseUnitRank(raw) {
+  const key = raw.trim().toLowerCase().replace(/_/g, "").replace(/\s+/g, "");
+  if (key === "") {
+    return 0;
+  }
+  return ALIASES[key] ?? 0;
+}
+
 // src/sim/gacha.ts
-function expectedPullsToSHero(sRate, pity) {
-  const p = Math.min(1, Math.max(0, sRate));
-  const n = Math.max(1, Math.floor(pity));
+function expectedPullsWithHardPity(rate, pity) {
+  const p = Math.min(1, Math.max(0, rate));
+  const n = Math.max(0, Math.floor(pity));
   if (p <= 0) {
-    return n;
+    return n + 1;
   }
   if (p >= 1) {
     return 1;
   }
   const q = 1 - p;
-  const qn1 = q ** (n - 1);
-  const qn = qn1 * q;
-  const sum = (1 - n * qn1 + (n - 1) * qn) / (p * p);
-  return p * sum + n * qn1;
+  const qn = q ** n;
+  return (1 - q * qn) / p;
+}
+function expectedPullsGeometric(rate) {
+  const p = Math.min(1, Math.max(0, rate));
+  if (p <= 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return 1 / p;
+}
+function relevantTierUps(tierUps, startingHeroTier) {
+  const minRank = parseUnitRank(startingHeroTier);
+  if (minRank <= 0) {
+    return tierUps;
+  }
+  return tierUps.filter((row) => {
+    const current = parseUnitRank(row.currentTier);
+    return current === 0 || current >= minRank;
+  });
 }
 function computeGachaEv(gacha, tierUps, params) {
-  const pullsToS = expectedPullsToSHero(gacha.sHero, params.gachaPity);
-  const namedGivenS = 1 / Math.max(1, params.sHeroCount);
-  const pullsToNamedShard = pullsToS / namedGivenS;
+  const pullsToS = expectedPullsWithHardPity(gacha.sRankHero, params.gachaPity);
+  const pullsToA = expectedPullsGeometric(gacha.aRankHero);
+  const pullsToNamedSCopy = pullsToS * Math.max(1, params.sHeroCount);
+  const pullsToNamedACopy = pullsToA * Math.max(1, params.aHeroCount);
   const emblemRate = gacha.arms / Math.max(1, params.factionCount);
   const pullsToFactionEmblem = emblemRate > 0 ? 1 / emblemRate : Number.POSITIVE_INFINITY;
-  const dustPerNamedShard = pullsToNamedShard * params.dustPerPull;
+  const dustPerNamedShard = pullsToNamedSCopy * params.dustPerPull;
+  const dustPerNamedAShard = pullsToNamedACopy * params.dustPerPull;
   const dustPerFactionEmblem = pullsToFactionEmblem * params.dustPerPull;
-  const shardsPerHero = tierUps.reduce((sum, row) => sum + row.shards, 0);
-  const armsPerHero = tierUps.reduce((sum, row) => sum + row.arms, 0);
-  const dustPerHeroFullAscension = shardsPerHero * dustPerNamedShard + armsPerHero * dustPerFactionEmblem;
+  const usedTiers = relevantTierUps(tierUps, params.startingHeroTier);
+  const shardsPerHero = usedTiers.reduce((sum, row) => sum + row.shards, 0);
+  const armsPerHero = usedTiers.reduce((sum, row) => sum + row.arms, 0);
+  const dustPerHeroFullAscension = usedTiers.reduce(
+    (sum, row) => sum + row.shards * shardDust(row, dustPerNamedShard, dustPerNamedAShard) + row.arms * dustPerFactionEmblem,
+    0
+  );
   return {
     pullsToS,
-    pullsToNamedShard,
+    pullsToA,
+    pullsToNamedSCopy,
+    pullsToNamedACopy,
     pullsToFactionEmblem,
     dustPerNamedShard,
+    dustPerNamedAShard,
     dustPerFactionEmblem,
     dustPerHeroFullAscension,
     dustPerSquadFullAscension: dustPerHeroFullAscension * params.heroCount,
@@ -505,7 +561,14 @@ function computeGachaEv(gacha, tierUps, params) {
   };
 }
 function dustCostForTierUp(row, ev, heroCount) {
-  return heroCount * (row.shards * ev.dustPerNamedShard + row.arms * ev.dustPerFactionEmblem);
+  return heroCount * (row.shards * shardDust(row, ev.dustPerNamedShard, ev.dustPerNamedAShard) + row.arms * ev.dustPerFactionEmblem);
+}
+function shardDust(row, sDust, aDust) {
+  const rank = parseUnitRank(row.currentTier);
+  if (rank > 0 && rank < parseUnitRank("S")) {
+    return aDust;
+  }
+  return sDust;
 }
 
 // src/sim/types.ts
@@ -548,17 +611,27 @@ var RESOURCE_LABELS = {
 };
 var DEFAULT_SIM_PARAMS = {
   heroCount: 5,
-  energyPerDay: 432,
+  energyRegenIntervalSeconds: 300,
+  energyPerTick: 1,
+  spinEnergyCost: 1,
   adsPerDay: 5,
   winRate: 0.9,
-  dustPerPull: 10,
+  dustPerPull: 100,
   sHeroCount: 8,
+  aHeroCount: 8,
   factionCount: 4,
   gachaPity: 80,
+  startingHeroTier: "S",
   maxDays: 1e4,
   checkpoints: checkpointsEvery(20, 240),
-  leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140]
+  leagueProgression: "rating",
+  leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140],
+  applyPvpLossRewards: false
 };
+function regenEnergyPerDay(params) {
+  const interval = Math.max(1, params.energyRegenIntervalSeconds);
+  return 86400 / interval * Math.max(0, params.energyPerTick);
+}
 function checkpointsEvery(step, maxLevel) {
   const levels = [];
   for (let level = step; level <= maxLevel; level += step) {
@@ -568,45 +641,55 @@ function checkpointsEvery(step, maxLevel) {
 }
 
 // src/sim/income.ts
-function energyReturnChance(slotDrops) {
-  let chance = 0;
+function energyPerSpinFromSlots(slotDrops) {
+  let energy = 0;
   for (const drop of slotDrops) {
     if (normalizeItemType(drop.itemType) === "energy") {
-      chance += drop.probability * drop.value;
+      energy += drop.probability * drop.value;
     }
   }
-  return chance;
-}
-function dailySpins(energyPerDay, slotDrops) {
-  const returned = energyReturnChance(slotDrops);
-  const denom = 1 - returned;
-  if (denom <= 1e-9) {
-    return energyPerDay;
-  }
-  return energyPerDay / denom;
+  return energy;
 }
 function computeDailyIncome(config, league, params) {
-  const spins = dailySpins(params.energyPerDay, config.slotDrops);
-  const fromSlots = slotIncome(config.slotDrops, spins, league);
+  const regenEnergy = regenEnergyPerDay(params);
+  const cost = Math.max(1e-9, params.spinEnergyCost);
+  const adEnergyEach = expectedWeightedEnergy(config.ads.drops, league, "ad", config.ads.leagueMultiplier.get(league.id) ?? 1, true);
+  const adChestsEach = expectedWeightedKind(config.ads.drops, "chest");
+  const chestEnergyEach = expectedChestEnergy(config.chest, league);
+  const chestResEach = expectedChestResources(config.chest, league);
+  const adEnergy = params.adsPerDay * adEnergyEach;
+  const adChests = params.adsPerDay * adChestsEach;
+  const slotEnergyPerSpin = energyPerSpinFromSlots(config.slotDrops);
   const pvpChance = pvpHitChance(config.slotDrops);
+  const slotChestChance = chestHitChance(config.slotDrops);
+  const pvpChestPerSpin = pvpChance * params.winRate * (pvpOpensChest(config, league) ? 1 : 0);
+  const chestsPerSpin = slotChestChance + pvpChestPerSpin;
+  const energyPerSpinReturned = slotEnergyPerSpin + chestsPerSpin * chestEnergyEach;
+  const denom = cost - energyPerSpinReturned;
+  const constantEnergy = regenEnergy + adEnergy + adChests * chestEnergyEach;
+  const spins = denom > 1e-9 ? constantEnergy / denom : constantEnergy / cost;
+  const fromSlots = slotIncome(config.slotDrops, spins, league);
   const pvpFights = spins * pvpChance;
   const pvpWins = pvpFights * params.winRate;
   const pvpLosses = pvpFights * (1 - params.winRate);
   const fromPvp = addScaled(
     pvpMatchReward(config, league, "Win"),
     pvpWins,
-    pvpMatchReward(config, league, "Loss"),
+    params.applyPvpLossRewards ? pvpMatchReward(config, league, "Loss") : emptyResources(),
     pvpLosses
   );
-  const slotChests = spins * chestHitChance(config.slotDrops);
-  const pvpChests = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
-  const chestsOpened = slotChests + pvpChests;
-  const fromChests = scaleRes(expectedChestResources(config.chest, league), chestsOpened);
+  const slotAndPvpChests = spins * chestsPerSpin;
+  const chestsOpened = slotAndPvpChests + adChests;
+  const fromChests = scaleRes(chestResEach, chestsOpened);
   const fromAds = scaleRes(expectedAdResources(config.ads, league), params.adsPerDay);
   const total = sumRes(fromSlots, fromPvp, fromChests, fromAds);
   return {
     spins,
-    energyReturnChance: energyReturnChance(config.slotDrops),
+    regenEnergy,
+    adEnergy,
+    chestEnergy: chestsOpened * chestEnergyEach,
+    slotEnergy: spins * slotEnergyPerSpin,
+    energyReturnPerSpin: energyPerSpinReturned,
     pvpFights,
     pvpWins,
     pvpLosses,
@@ -663,18 +746,23 @@ function pvpOpensChest(config, league) {
   const fallback = config.pvpRewards.find((row) => row.result === "Win");
   return (exact ?? fallback)?.opensChest ?? true;
 }
+function expectedDropCount(chest) {
+  return chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
+}
 function expectedChestResources(chest, league) {
-  const expectedCount = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
   const leagueMult = chest.leagueMultiplier.get(league.id) ?? 1;
   const perDrop = emptyResources();
   const weightSum = chest.drops.reduce((sum, drop) => sum + drop.probability, 0);
   for (const drop of chest.drops) {
     const p = weightSum > 0 ? drop.probability / weightSum : 0;
     const avg = (drop.minAmount + drop.maxAmount) / 2;
-    const amount = p * avg;
-    addItem(perDrop, drop.itemType, amount, drop.affectedByLeague, league, "chest", leagueMult);
+    addItem(perDrop, drop.itemType, p * avg, drop.affectedByLeague, league, "chest", leagueMult);
   }
-  return scaleRes(perDrop, expectedCount);
+  return scaleRes(perDrop, expectedDropCount(chest));
+}
+function expectedChestEnergy(chest, league) {
+  const leagueMult = chest.leagueMultiplier.get(league.id) ?? 1;
+  return expectedDropCount(chest) * expectedWeightedEnergy(chest.drops, league, "chest", leagueMult, true);
 }
 function expectedAdResources(ads, league) {
   const leagueMult = ads.leagueMultiplier.get(league.id) ?? 1;
@@ -687,31 +775,57 @@ function expectedAdResources(ads, league) {
   }
   return out;
 }
+function expectedWeightedEnergy(drops, league, source, extraLeagueMult, normalizeWeights = false) {
+  const weightSum = drops.reduce((sum, drop) => sum + drop.probability, 0);
+  let energy = 0;
+  for (const drop of drops) {
+    if (normalizeItemType(drop.itemType) !== "energy") {
+      continue;
+    }
+    const p = normalizeWeights && weightSum > 0 ? drop.probability / weightSum : drop.probability;
+    const avg = (drop.minAmount + drop.maxAmount) / 2;
+    energy += scaledAmount(p * avg, drop.affectedByLeague, league, source, extraLeagueMult, "energy");
+  }
+  return energy;
+}
+function expectedWeightedKind(drops, kind) {
+  const weightSum = drops.reduce((sum, drop) => sum + drop.probability, 0);
+  let amount = 0;
+  for (const drop of drops) {
+    if (normalizeItemType(drop.itemType) !== kind) {
+      continue;
+    }
+    const p = weightSum > 0 ? drop.probability / weightSum : drop.probability;
+    const avg = (drop.minAmount + drop.maxAmount) / 2;
+    amount += p * (avg > 0 ? avg : 1);
+  }
+  return amount;
+}
 function addItem(out, itemType, amount, affectedByLeague, league, source, extraLeagueMult = 1) {
   const kind = normalizeItemType(itemType);
-  let goldMult = 1;
-  let expMult = 1;
-  if (affectedByLeague) {
-    if (source === "ad") {
-      goldMult = extraLeagueMult;
-      expMult = extraLeagueMult;
-    } else if (source === "chest") {
-      goldMult = extraLeagueMult;
-      expMult = extraLeagueMult;
-    } else {
-      goldMult = league.goldIncomeMultiplier;
-      expMult = league.expIncomeMultiplier;
-    }
-  }
+  const gold = scaledAmount(amount, affectedByLeague, league, source, extraLeagueMult, "gold");
+  const exp = scaledAmount(amount, affectedByLeague, league, source, extraLeagueMult, "exp");
   if (kind === "gold") {
-    out.gold += amount * goldMult;
+    out.gold += gold;
   } else if (kind === "exp") {
-    out.exp += amount * expMult;
+    out.exp += exp;
   } else if (kind === "dust") {
     out.dust += amount;
   } else if (kind === "essence") {
     out.essence += amount;
   }
+}
+function scaledAmount(amount, affectedByLeague, league, source, extraLeagueMult, kind) {
+  if (!affectedByLeague) {
+    return amount;
+  }
+  if (source === "ad" || source === "chest") {
+    return amount * extraLeagueMult;
+  }
+  if (kind === "exp") {
+    return amount * league.expIncomeMultiplier;
+  }
+  return amount * league.goldIncomeMultiplier;
 }
 function normalizeItemType(itemType) {
   const raw = itemType.trim().toLowerCase();
@@ -771,18 +885,20 @@ function addScaled(a, fa, b, fb) {
 // src/sim/simulate.ts
 function runSimulation(config, params) {
   const gacha = computeGachaEv(config.gacha, config.tierUps, params);
-  const notes = [];
+  const notes = alignmentNotes(config, params, gacha);
   const maxLevel = config.levels.reduce((max, row) => Math.max(max, row.level), 1);
   const byLevel = new Map(config.levels.map((row) => [row.level, row]));
-  const pendingTiers = assignTierUps(config);
+  const pendingTiers = assignTierUps(config, params);
   const incomeByLeague = config.leagues.map((league2) => ({
     leagueName: league2.name || league2.id,
     income: computeDailyIncome(config, league2, params)
   }));
+  const useRating = params.leagueProgression === "rating" && hasRatingProgression(config.leagues);
   let day = 0;
   let squadLevel = 1;
   let leagueIndex = 0;
   let pendingLeagueIndex = null;
+  let rating = startingRating(config.leagues);
   let inventory = emptyResources();
   const checkpointDays = /* @__PURE__ */ new Map();
   const stallAcc = /* @__PURE__ */ new Map();
@@ -793,13 +909,19 @@ function runSimulation(config, params) {
   }
   while (day < params.maxDays && squadLevel < maxLevel) {
     day += 1;
-    if (pendingLeagueIndex !== null) {
+    if (!useRating && pendingLeagueIndex !== null) {
       leagueIndex = pendingLeagueIndex;
       pendingLeagueIndex = null;
     }
+    if (useRating) {
+      leagueIndex = leagueIndexForRating(config.leagues, rating);
+    }
     const league2 = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
-    const income = computeDailyIncome(config, league2, params);
+    const income = incomeByLeague[Math.min(leagueIndex, incomeByLeague.length - 1)]?.income ?? computeDailyIncome(config, league2, params);
     inventory = addResources(inventory, income.total);
+    if (useRating && league2) {
+      rating = Math.max(0, rating + income.pvpWins * league2.winRating + income.pvpLosses * league2.lossRating);
+    }
     let progressed = true;
     while (progressed) {
       progressed = false;
@@ -836,9 +958,11 @@ function runSimulation(config, params) {
             checkpointDays.set(cp, day);
           }
         }
-        const unlocked = leagueIndexForLevel(params.leagueUnlockLevels, squadLevel);
-        if (unlocked > leagueIndex && unlocked !== pendingLeagueIndex) {
-          pendingLeagueIndex = unlocked;
+        if (!useRating) {
+          const unlocked = leagueIndexForLevel(params.leagueUnlockLevels, squadLevel);
+          if (unlocked > leagueIndex && unlocked !== pendingLeagueIndex) {
+            pendingLeagueIndex = unlocked;
+          }
         }
         continue;
       }
@@ -865,6 +989,7 @@ function runSimulation(config, params) {
     finalLevel: squadLevel,
     maxLevel,
     finalLeagueName: league?.name || league?.id || "\u2014",
+    finalRating: rating,
     inventory,
     checkpoints: params.checkpoints.map((level) => ({
       level,
@@ -877,17 +1002,75 @@ function runSimulation(config, params) {
     notes
   };
 }
+function alignmentNotes(config, params, gacha) {
+  const notes = [];
+  const regen = regenEnergyPerDay(params);
+  notes.push(
+    `\u0413\u0430\u0447\u0430 \u043A\u0430\u043A \u0432 \u043A\u043B\u0438\u0435\u043D\u0442\u0435: pity \u043D\u0430 HeroATier (S-\u0440\u0430\u043D\u0433, ${(config.gacha.sRankHero * 100).toFixed(1)}%), HeroSTier \u2192 A-\u0440\u0430\u043D\u0433 \u0431\u0435\u0437 pity. \u0426\u0435\u043D\u0430 \u043A\u0440\u0443\u0442\u043A\u0438 ${params.dustPerPull} \u043F\u044B\u043B\u0438, \u0433\u0430\u0440\u0430\u043D\u0442 \u043F\u043E\u0441\u043B\u0435 ${params.gachaPity} \u043F\u0440\u043E\u043C\u0430\u0445\u043E\u0432 (\u043A\u0440\u0443\u0442\u043A\u0430 ${params.gachaPity + 1}).`
+  );
+  notes.push(
+    `\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438: +${params.energyPerTick} / ${params.energyRegenIntervalSeconds} \u0441 \u2248 ${regen.toFixed(0)}/\u0441\u0443\u0442\u043A\u0438 \u043F\u0440\u0438 \u043F\u043E\u0441\u0442\u043E\u044F\u043D\u043D\u043E\u0439 \u0442\u0440\u0430\u0442\u0435 (\u043A\u043B\u0438\u0435\u043D\u0442 300 \u0441, \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u044B\u0439 fallback 150 \u0441). \u042D\u043D\u0435\u0440\u0433\u0438\u044F \u0441 \u0440\u0435\u043A\u043B\u0430\u043C\u044B \u0438 \u0441\u0443\u043D\u0434\u0443\u043A\u043E\u0432 \u0443\u0445\u043E\u0434\u0438\u0442 \u0432 \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0441\u043F\u0438\u043D\u044B.`
+  );
+  notes.push(
+    "PvP-\u0441\u0443\u043D\u0434\u0443\u043A \u0432 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u0445 \u0422\u0417: EV = DropCount \xD7 \u0432\u0437\u0432\u0435\u0448\u0435\u043D\u043D\u044B\u0435 \u0434\u0440\u043E\u043F\u044B \xD7 ChestMultiplier. \u0412 \u043A\u043B\u0438\u0435\u043D\u0442\u0435 \u0441\u0443\u043D\u0434\u0443\u043A \u0432\u044B\u0434\u0430\u0451\u0442 \u0432\u0441\u0435 Fixed-\u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0438 \u0440\u043E\u0432\u043D\u043E \u043E\u0434\u0438\u043D Variable, \u0431\u0435\u0437 DropCount."
+  );
+  notes.push(
+    "\u0421\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u0430 \u0432 \u043A\u0430\u043B\u044C\u043A\u0443\u043B\u044F\u0442\u043E\u0440\u0435 \u0431\u0435\u0440\u0451\u0442\u0441\u044F \u0438\u0437 \u043F\u043B\u043E\u0441\u043A\u043E\u0439 \u0442\u0430\u0431\u043B\u0438\u0446\u044B SlotMachineBaseDrops (\u0422\u0417). \u0412 \u043A\u043B\u0438\u0435\u043D\u0442\u0435 \u044D\u0442\u043E 3 \u0431\u0430\u0440\u0430\u0431\u0430\u043D\u0430 \u0438 \u0432\u044B\u043F\u043B\u0430\u0442\u0430 \u0442\u043E\u043B\u044C\u043A\u043E \u0437\u0430 X3 (SlotsInitialChance / Bonus / BonusX3 / AllSymbols + SlotsGoldAndEnergyProgression)."
+  );
+  if (params.leagueProgression === "rating") {
+    if (hasRatingProgression(config.leagues)) {
+      notes.push("\u041B\u0438\u0433\u0438 \u0441\u0447\u0438\u0442\u0430\u044E\u0442\u0441\u044F \u043F\u043E \u0431\u043E\u0435\u0432\u043E\u043C\u0443 \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443 (Min/Max/Win/Loss Rating), \u043A\u0430\u043A \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435. GoldIncomeMultiplier \u0438\u0437 \u0442\u0430\u0431\u043B\u0438\u0446\u044B \u0432\u0441\u0451 \u0435\u0449\u0451 \u043F\u0440\u0438\u043C\u0435\u043D\u044F\u0435\u0442\u0441\u044F \u043A \u0441\u043B\u043E\u0442-\u0434\u0440\u043E\u043F\u0430\u043C \u0441 IsAffectedByLeague.");
+    } else {
+      notes.push("\u0412 PvpLeaguesConfig \u043D\u0435\u0442 Win/Loss Rating \u2014 \u043B\u0438\u0433\u0438 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u044E\u0442\u0441\u044F \u043F\u043E \u0443\u0440\u043E\u0432\u043D\u044E \u043E\u0442\u0440\u044F\u0434\u0430, \u043A\u0430\u043A \u0432 \u0422\u0417 \u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u0430.");
+    }
+  } else {
+    notes.push("\u041B\u0438\u0433\u0438 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u044E\u0442\u0441\u044F \u043F\u043E \u0443\u0440\u043E\u0432\u043D\u044E \u043E\u0442\u0440\u044F\u0434\u0430 (\u0440\u0435\u0436\u0438\u043C \u0422\u0417). \u0412 \u0436\u0438\u0432\u043E\u0439 \u0438\u0433\u0440\u0435 \u043B\u0438\u0433\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u0442 battle rating.");
+  }
+  if (!params.applyPvpLossRewards) {
+    notes.push("\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u043E\u0440\u0430\u0436\u0435\u043D\u0438\u0435 PvP \u043D\u0435 \u043D\u0430\u0447\u0438\u0441\u043B\u044F\u044E\u0442\u0441\u044F \u2014 \u043A\u043B\u0438\u0435\u043D\u0442 \u043A\u043B\u0430\u0434\u0451\u0442 \u0440\u0435\u0441\u0443\u0440\u0441\u044B \u0442\u043E\u043B\u044C\u043A\u043E \u0432 BattleResultType.Win.");
+  }
+  const skipped = config.tierUps.length - relevantTierUps(config.tierUps, params.startingHeroTier).length;
+  if (skipped > 0) {
+    notes.push(`HeroTierUp: \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B ${skipped} \u0441\u0442\u0443\u043F\u0435\u043D\u0435\u0439 \u043D\u0438\u0436\u0435 ${params.startingHeroTier} (S-\u0433\u0435\u0440\u043E\u0438 \u043D\u0435 \u043F\u043B\u0430\u0442\u044F\u0442 A\u2192S).`);
+  }
+  if (!Number.isFinite(gacha.dustPerNamedShard)) {
+    notes.push("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0441\u0447\u0438\u0442\u0430\u0442\u044C EV \u0438\u043C\u0435\u043D\u043D\u043E\u0439 \u043A\u043E\u043F\u0438\u0438: \u043F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 GachaBaseDrops.");
+  }
+  return notes;
+}
+function hasRatingProgression(leagues) {
+  return leagues.some((league) => league.winRating !== 0 || league.lossRating !== 0);
+}
+function startingRating(leagues) {
+  if (leagues.length === 0) {
+    return 0;
+  }
+  return Math.max(0, leagues[0].minRating);
+}
+function leagueIndexForRating(leagues, rating) {
+  let best = 0;
+  for (let i = 0; i < leagues.length; i++) {
+    const league = leagues[i];
+    if (rating + 1e-9 >= league.minRating) {
+      best = i;
+      if (league.maxRating > 0 && rating <= league.maxRating) {
+        break;
+      }
+    }
+  }
+  return best;
+}
 function levelCost(row) {
   return {
     gold: row.goldCost,
-    exp: row.expCost,
-    essence: row.essenceCost,
+    exp: row.isBreakthrough ? 0 : row.expCost,
+    essence: row.isBreakthrough ? row.essenceCost : 0,
     dust: 0
   };
 }
-function assignTierUps(config) {
+function assignTierUps(config, params) {
   const breakthroughs = config.levels.filter((row) => row.isBreakthrough).map((row) => row.level).sort((a, b) => a - b);
-  const ups = config.tierUps;
+  const ups = relevantTierUps(config.tierUps, params.startingHeroTier);
   if (ups.length === 0 || breakthroughs.length === 0) {
     return [];
   }
@@ -987,6 +1170,7 @@ function simulationReportCsv(result) {
   lines.push(`meta,finalLevel,${result.finalLevel}`);
   lines.push(`meta,maxLevel,${result.maxLevel}`);
   lines.push(`meta,finalLeague,${csvCell(result.finalLeagueName)}`);
+  lines.push(`meta,finalRating,${result.finalRating}`);
   for (const cp of result.checkpoints) {
     lines.push(`checkpoint,${cp.level},${cp.day ?? ""}`);
   }
@@ -994,15 +1178,22 @@ function simulationReportCsv(result) {
   for (const stall of result.stalls) {
     lines.push(`stall,${stall.squadLevel}:${stall.limiting},${stall.days}`);
   }
-  lines.push(`gacha,dustPerNamedShard,${result.gacha.dustPerNamedShard}`);
+  lines.push(`gacha,pullsToS,${result.gacha.pullsToS}`);
+  lines.push(`gacha,pullsToA,${result.gacha.pullsToA}`);
+  lines.push(`gacha,dustPerNamedSCopy,${result.gacha.dustPerNamedShard}`);
+  lines.push(`gacha,dustPerNamedACopy,${result.gacha.dustPerNamedAShard}`);
   lines.push(`gacha,dustPerFactionEmblem,${result.gacha.dustPerFactionEmblem}`);
   lines.push(`gacha,dustPerSquadFullAscension,${result.gacha.dustPerSquadFullAscension}`);
   for (const row of result.incomeByLeague) {
     const t = row.income.total;
+    lines.push(`income,${csvCell(row.leagueName)} spins,${row.income.spins}`);
     lines.push(`income,${csvCell(row.leagueName)} gold,${t.gold}`);
     lines.push(`income,${csvCell(row.leagueName)} exp,${t.exp}`);
     lines.push(`income,${csvCell(row.leagueName)} essence,${t.essence}`);
     lines.push(`income,${csvCell(row.leagueName)} dust,${t.dust}`);
+  }
+  for (const note of result.notes) {
+    lines.push(`note,text,${csvCell(note)}`);
   }
   return `${lines.join("\n")}
 `;
@@ -1074,7 +1265,7 @@ var ConfigTablesApp = class {
     title.style.cssText = "margin: 0 0 8px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
     const intro = document.createElement("p");
-    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F: \u0441\u043B\u043E\u0442\u044B + \u0430\u0440\u0435\u043D\u0430 + 5 \u0440\u0435\u043A\u043B\u0430\u043C. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E. \u0412\u043D\u0435\u0448\u043D\u0438\u0435 \u0438\u0432\u0435\u043D\u0442\u044B \u043D\u0435 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F.";
+    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F \u043F\u043E \u0444\u043E\u0440\u043C\u0443\u043B\u0430\u043C \u043A\u043B\u0438\u0435\u043D\u0442\u0430/\u0441\u0435\u0440\u0432\u0435\u0440\u0430: \u0441\u043B\u043E\u0442\u044B + \u0430\u0440\u0435\u043D\u0430 + \u0440\u0435\u043A\u043B\u0430\u043C\u0430. \u042D\u043D\u0435\u0440\u0433\u0438\u044F \u0441 \u0440\u0435\u043A\u043B\u0430\u043C\u044B \u0438 \u0441\u0443\u043D\u0434\u0443\u043A\u043E\u0432 \u043A\u0440\u0443\u0442\u0438\u0442\u0441\u044F \u0441\u043D\u043E\u0432\u0430. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E. \u041F\u043E\u0447\u0442\u0430, \u043A\u0432\u0435\u0441\u0442\u044B \u0438 \u0438\u0432\u0435\u043D\u0442\u044B \u043D\u0435 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F.";
     intro.style.cssText = "margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;";
     root.appendChild(intro);
     root.appendChild(this.createTablesSection());
@@ -1123,36 +1314,47 @@ var ConfigTablesApp = class {
     const p = DEFAULT_SIM_PARAMS;
     grid.append(
       this.paramField("heroCount", "\u0413\u0435\u0440\u043E\u0438 \u0432 \u043E\u0442\u0440\u044F\u0434\u0435", p.heroCount, 1),
-      this.paramField("energyPerDay", "\u042D\u043D\u0435\u0440\u0433\u0438\u044F / \u0441\u0443\u0442\u043A\u0438", p.energyPerDay, 1),
+      this.paramField("energyRegenIntervalSeconds", "\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438, \u0441\u0435\u043A", p.energyRegenIntervalSeconds, 1),
+      this.paramField("energyPerTick", "\u042D\u043D\u0435\u0440\u0433\u0438\u0438 \u0437\u0430 \u0442\u0438\u043A", p.energyPerTick, 1),
+      this.paramField("spinEnergyCost", "\u042D\u043D\u0435\u0440\u0433\u0438\u0438 \u0437\u0430 \u0441\u043F\u0438\u043D", p.spinEnergyCost, 1),
       this.paramField("adsPerDay", "\u0420\u0435\u043A\u043B\u0430\u043C\u0430 / \u0441\u0443\u0442\u043A\u0438", p.adsPerDay, 1),
       this.paramField("winRatePct", "\u0412\u0438\u043D\u0440\u0435\u0439\u0442 PvP %", p.winRate * 100, 1),
       this.paramField("dustPerPull", "\u041F\u044B\u043B\u044C \u0437\u0430 1 \u043A\u0440\u0443\u0442\u043A\u0443", p.dustPerPull, 1),
       this.paramField("sHeroCount", "\u0413\u0435\u0440\u043E\u0438 S \u0432 \u043F\u0443\u043B\u0435", p.sHeroCount, 1),
+      this.paramField("aHeroCount", "\u0413\u0435\u0440\u043E\u0438 A \u0432 \u043F\u0443\u043B\u0435", p.aHeroCount, 1),
       this.paramField("factionCount", "\u0424\u0440\u0430\u043A\u0446\u0438\u0439 (\u0433\u0435\u0440\u0431\u044B)", p.factionCount, 1),
-      this.paramField("gachaPity", "\u0413\u0430\u0440\u0430\u043D\u0442 S (\u043A\u0440\u0443\u0442\u043A\u0430)", p.gachaPity, 1),
+      this.paramField("gachaPity", "Pity (\u043F\u0440\u043E\u043C\u0430\u0445\u043E\u0432 \u0434\u043E \u0433\u0430\u0440\u0430\u043D\u0442\u0430)", p.gachaPity, 1),
+      this.paramField("startingHeroTier", "\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u0440\u0430\u043D\u0433 \u0433\u0435\u0440\u043E\u0435\u0432", p.startingHeroTier, 0, false, true),
       this.paramField("maxDays", "\u041C\u0430\u043A\u0441. \u0434\u043D\u0435\u0439", p.maxDays, 1)
     );
     wrap.appendChild(grid);
+    const flags = document.createElement("div");
+    flags.style.cssText = "display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;";
+    flags.append(
+      this.checkboxField("leagueByRating", "\u041B\u0438\u0433\u0438 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443 (\u043A\u0430\u043A \u0432 \u0438\u0433\u0440\u0435)", p.leagueProgression === "rating"),
+      this.checkboxField("applyPvpLossRewards", "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u043E\u0440\u0430\u0436\u0435\u043D\u0438\u0435 PvP", p.applyPvpLossRewards)
+    );
+    wrap.appendChild(flags);
     const extra = document.createElement("div");
     extra.style.cssText = "display: grid; gap: 10px; margin-top: 10px;";
     extra.append(
       this.paramField("checkpoints", "\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442\u044B \u0443\u0440\u043E\u0432\u043D\u0435\u0439", p.checkpoints.join(", "), 0, true),
-      this.paramField("leagueUnlockLevels", "\u0423\u0440\u043E\u0432\u043D\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u044F \u043B\u0438\u0433", p.leagueUnlockLevels.join(", "), 0, true)
+      this.paramField("leagueUnlockLevels", "\u0423\u0440\u043E\u0432\u043D\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u044F \u043B\u0438\u0433 (\u0435\u0441\u043B\u0438 \u0440\u0435\u0439\u0442\u0438\u043D\u0433 \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D)", p.leagueUnlockLevels.join(", "), 0, true)
     );
     wrap.appendChild(extra);
     const hint = document.createElement("div");
-    hint.textContent = "\u041B\u0438\u0433\u0430 2 (\u0421\u0435\u0440\u0435\u0431\u0440\u043E) \u0441 \u0443\u0440\u043E\u0432\u043D\u044F 40 \u2014 \u043A\u0430\u043A \u0432 \u0422\u0417; \u0434\u0430\u043B\u044C\u0448\u0435 60 / 80 / 100 / 120 / 140. \u0412\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 (\u043E\u0441\u043A\u043E\u043B\u043A\u0438/\u0433\u0435\u0440\u0431\u044B) \u0441\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u0431\u0440\u0435\u0439\u043A\u043F\u043E\u0438\u043D\u0442\u043E\u0432 20/40/60/80.";
+    hint.textContent = "\u041A\u043B\u0438\u0435\u043D\u0442: +1 \u044D\u043D\u0435\u0440\u0433\u0438\u044F / 300 \u0441 \u2248 288/\u0441\u0443\u0442\u043A\u0438, \u0441\u043F\u0438\u043D \u0441\u0442\u043E\u0438\u0442 1, \u043A\u0440\u0443\u0442\u043A\u0430 \u0433\u0430\u0447\u0438 100 \u043F\u044B\u043B\u0438, pity \u043D\u0430 HeroATier (S). \u0412\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u0441\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u0431\u0440\u0435\u0439\u043A\u043F\u043E\u0438\u043D\u0442\u043E\u0432. \u0421\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u0440\u0430\u043D\u0433 S \u2014 \u0433\u0435\u0440\u043E\u0438 \u043D\u0435 \u043F\u043B\u0430\u0442\u044F\u0442 \u0441\u0442\u0443\u043F\u0435\u043D\u0438 A\u2192S.";
     hint.style.cssText = "margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;";
     wrap.appendChild(hint);
     return wrap;
   }
-  paramField(key, label, value, step, wide = false) {
+  paramField(key, label, value, step, wide = false, text = false) {
     const wrap = document.createElement("label");
     wrap.style.cssText = `display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #bdbdbd;${wide ? " grid-column: 1 / -1;" : ""}`;
     wrap.append(label);
     const input = document.createElement("input");
     input.value = String(value);
-    if (!wide) {
+    if (!wide && !text) {
       input.type = "number";
       input.min = "0";
       input.step = String(step || 1);
@@ -1168,6 +1370,16 @@ var ConfigTablesApp = class {
     ].join(";");
     this.paramInputs.set(key, input);
     wrap.appendChild(input);
+    return wrap;
+  }
+  checkboxField(key, label, checked) {
+    const wrap = document.createElement("label");
+    wrap.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cfcfcf; cursor: pointer;";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = checked;
+    this.paramInputs.set(key, input);
+    wrap.append(input, label);
     return wrap;
   }
   makeButton(text, dataAttr) {
@@ -1345,18 +1557,29 @@ var ConfigTablesApp = class {
       return parsed.length > 0 ? parsed : fallback;
     };
     const d = DEFAULT_SIM_PARAMS;
+    const checked = (key, fallback) => this.paramInputs.get(key)?.checked ?? fallback;
+    const text = (key, fallback) => {
+      const raw = this.paramInputs.get(key)?.value?.trim();
+      return raw ? raw : fallback;
+    };
     return {
       heroCount: Math.max(1, Math.round(num("heroCount", d.heroCount))),
-      energyPerDay: Math.max(0, num("energyPerDay", d.energyPerDay)),
+      energyRegenIntervalSeconds: Math.max(1, num("energyRegenIntervalSeconds", d.energyRegenIntervalSeconds)),
+      energyPerTick: Math.max(0, num("energyPerTick", d.energyPerTick)),
+      spinEnergyCost: Math.max(1e-4, num("spinEnergyCost", d.spinEnergyCost)),
       adsPerDay: Math.max(0, num("adsPerDay", d.adsPerDay)),
       winRate: Math.min(1, Math.max(0, num("winRatePct", d.winRate * 100) / 100)),
       dustPerPull: Math.max(0, num("dustPerPull", d.dustPerPull)),
       sHeroCount: Math.max(1, Math.round(num("sHeroCount", d.sHeroCount))),
+      aHeroCount: Math.max(1, Math.round(num("aHeroCount", d.aHeroCount))),
       factionCount: Math.max(1, Math.round(num("factionCount", d.factionCount))),
       gachaPity: Math.max(1, Math.round(num("gachaPity", d.gachaPity))),
+      startingHeroTier: text("startingHeroTier", d.startingHeroTier),
       maxDays: Math.max(1, Math.round(num("maxDays", d.maxDays))),
       checkpoints: list("checkpoints", d.checkpoints),
-      leagueUnlockLevels: list("leagueUnlockLevels", d.leagueUnlockLevels)
+      leagueProgression: checked("leagueByRating", d.leagueProgression === "rating") ? "rating" : "squadLevel",
+      leagueUnlockLevels: list("leagueUnlockLevels", d.leagueUnlockLevels),
+      applyPvpLossRewards: checked("applyPvpLossRewards", d.applyPvpLossRewards)
     };
   }
   runSim() {
@@ -1387,7 +1610,7 @@ var ConfigTablesApp = class {
     heading.style.cssText = "margin: 0 0 10px; font-size: 16px;";
     this.resultsEl.appendChild(heading);
     this.resultsEl.appendChild(this.kvLine(
-      `\u0414\u043D\u0435\u0439: ${result.daysRun} \xB7 \u0423\u0440\u043E\u0432\u0435\u043D\u044C \u043E\u0442\u0440\u044F\u0434\u0430: ${result.finalLevel} / ${result.maxLevel} \xB7 \u041B\u0438\u0433\u0430: ${result.finalLeagueName}`
+      `\u0414\u043D\u0435\u0439: ${result.daysRun} \xB7 \u0423\u0440\u043E\u0432\u0435\u043D\u044C \u043E\u0442\u0440\u044F\u0434\u0430: ${result.finalLevel} / ${result.maxLevel} \xB7 \u041B\u0438\u0433\u0430: ${result.finalLeagueName} \xB7 \u0420\u0435\u0439\u0442\u0438\u043D\u0433: ${this.fmt(result.finalRating)}`
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442\u044B (\u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C)"));
     this.resultsEl.appendChild(this.simpleTable(
@@ -1415,20 +1638,25 @@ var ConfigTablesApp = class {
     this.resultsEl.appendChild(this.simpleTable(
       ["\u041C\u0435\u0442\u0440\u0438\u043A\u0430", "\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435"],
       [
-        ["\u041A\u0440\u0443\u0442\u043E\u043A \u0434\u043E S (\u0441 \u0433\u0430\u0440\u0430\u043D\u0442\u043E\u043C 80)", this.fmt(g.pullsToS)],
-        ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u0438\u043C\u0435\u043D\u043D\u043E\u0439 \u043E\u0441\u043A\u043E\u043B\u043E\u043A", this.fmt(g.dustPerNamedShard)],
+        ["\u041A\u0440\u0443\u0442\u043E\u043A \u0434\u043E S-\u0433\u0435\u0440\u043E\u044F (HeroATier + pity)", this.fmt(g.pullsToS)],
+        ["\u041A\u0440\u0443\u0442\u043E\u043A \u0434\u043E A-\u0433\u0435\u0440\u043E\u044F (HeroSTier, \u0431\u0435\u0437 pity)", this.fmt(g.pullsToA)],
+        ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u043A\u043E\u043F\u0438\u044E \u0438\u043C\u0435\u043D\u043D\u043E\u0433\u043E S", this.fmt(g.dustPerNamedShard)],
+        ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u043A\u043E\u043F\u0438\u044E \u0438\u043C\u0435\u043D\u043D\u043E\u0433\u043E A", this.fmt(g.dustPerNamedAShard)],
         ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u0444\u0440\u0430\u043A\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u0433\u0435\u0440\u0431", this.fmt(g.dustPerFactionEmblem)],
-        [`\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 1 \u0433\u0435\u0440\u043E\u044F (${g.shardsPerHero} \u043E\u0441\u043A. + ${g.armsPerHero} \u0433\u0435\u0440\u0431.)`, this.fmt(g.dustPerHeroFullAscension)],
-        ["\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u043E\u0442\u0440\u044F\u0434\u0430", this.fmt(g.dustPerSquadFullAscension)]
+        [`\u0412\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 1 \u0433\u0435\u0440\u043E\u044F \u0441 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E \u0440\u0430\u043D\u0433\u0430 (${g.shardsPerHero} \u043A\u043E\u043F\u0438\u0439 + ${g.armsPerHero} \u0433\u0435\u0440\u0431.)`, this.fmt(g.dustPerHeroFullAscension)],
+        ["\u0412\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u043E\u0442\u0440\u044F\u0434\u0430", this.fmt(g.dustPerSquadFullAscension)]
       ]
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0414\u043D\u0435\u0432\u043D\u043E\u0439 \u0434\u043E\u0445\u043E\u0434 \u043F\u043E \u043B\u0438\u0433\u0430\u043C"));
     this.resultsEl.appendChild(this.simpleTable(
-      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "PvP \u0431\u043E\u0451\u0432", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C"],
+      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "\u0420\u0435\u0433\u0435\u043D \u044D\u043D.", "\u0420\u0435\u043A\u043B. \u044D\u043D.", "PvP \u0431\u043E\u0451\u0432", "\u0421\u0443\u043D\u0434\u0443\u043A\u0438", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C"],
       result.incomeByLeague.map((row) => [
         row.leagueName,
         this.fmt(row.income.spins),
+        this.fmt(row.income.regenEnergy),
+        this.fmt(row.income.adEnergy),
         this.fmt(row.income.pvpFights),
+        this.fmt(row.income.chestsOpened),
         this.fmt(row.income.total.gold),
         this.fmt(row.income.total.exp),
         this.fmt(row.income.total.essence),

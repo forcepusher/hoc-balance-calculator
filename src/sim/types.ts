@@ -80,8 +80,10 @@ export interface SlotDrop {
 }
 
 export interface GachaRates {
-    sHero: number;
-    aHero: number;
+    /** Sheet key HeroSTier → client `UnitRank.A`. No pity. */
+    aRankHero: number;
+    /** Sheet key HeroATier → client `UnitRank.S`. Pity target. */
+    sRankHero: number;
     arms: number;
 }
 
@@ -92,6 +94,7 @@ export interface LeagueRow {
     maxRating: number;
     winRating: number;
     lossRating: number;
+    resetRating: number;
     goldIncomeMultiplier: number;
     expIncomeMultiplier: number;
     slotMachineTier: string;
@@ -137,34 +140,58 @@ export interface GameConfig {
     chest: ChestConfig;
 }
 
+export type LeagueProgression = 'rating' | 'squadLevel';
+
 export interface SimParams {
     heroCount: number;
-    energyPerDay: number;
+    /** Client default: +1 energy every 300s → 288/day if spent continuously. */
+    energyRegenIntervalSeconds: number;
+    energyPerTick: number;
+    spinEnergyCost: number;
     adsPerDay: number;
     winRate: number;
+    /** Client `GachaSummonConfig.DefaultSummonPrice`. */
     dustPerPull: number;
     sHeroCount: number;
+    aHeroCount: number;
     factionCount: number;
+    /** Client `MaxPityValue`. Pity fires on the next pull after this many non-S results. */
     gachaPity: number;
+    /** HeroTierUp rows with CurrentTier below this rank are skipped (S-heroes start at S). */
+    startingHeroTier: string;
     maxDays: number;
     checkpoints: number[];
-    /** Squad level at which each league (by table order) starts applying next day. */
+    leagueProgression: LeagueProgression;
+    /** Squad level at which each league (by table order) starts applying next day. Used when leagueProgression = squadLevel. */
     leagueUnlockLevels: number[];
+    /** Client battle rewards are win-only (`BattleRewardsFactory`). */
+    applyPvpLossRewards: boolean;
 }
 
 export const DEFAULT_SIM_PARAMS: SimParams = {
     heroCount: 5,
-    energyPerDay: 432,
+    energyRegenIntervalSeconds: 300,
+    energyPerTick: 1,
+    spinEnergyCost: 1,
     adsPerDay: 5,
     winRate: 0.9,
-    dustPerPull: 10,
+    dustPerPull: 100,
     sHeroCount: 8,
+    aHeroCount: 8,
     factionCount: 4,
     gachaPity: 80,
+    startingHeroTier: 'S',
     maxDays: 10000,
     checkpoints: checkpointsEvery(20, 240),
+    leagueProgression: 'rating',
     leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140],
+    applyPvpLossRewards: false,
 };
+
+export function regenEnergyPerDay(params: Pick<SimParams, 'energyRegenIntervalSeconds' | 'energyPerTick'>): number {
+    const interval = Math.max(1, params.energyRegenIntervalSeconds);
+    return (86400 / interval) * Math.max(0, params.energyPerTick);
+}
 
 function checkpointsEvery(step: number, maxLevel: number): number[] {
     const levels: number[] = [];

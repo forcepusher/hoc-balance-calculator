@@ -48,12 +48,14 @@ function parseLevelProgression(table: ParsedCsvTable): LevelRow[] {
     const levels = table.rows.map((row) => {
         const level = parseNumber(row[levelI]);
         const isBreakthrough = parseBool(row[btI]);
+        const expCost = parseNumber(row[expI]);
+        const essenceCost = parseNumber(row[essI]);
         return {
             level,
-            expCost: parseNumber(row[expI]),
+            expCost: isBreakthrough ? 0 : expCost,
             goldCost: parseNumber(row[goldI]),
             isBreakthrough,
-            essenceCost: parseNumber(row[essI]),
+            essenceCost: isBreakthrough ? essenceCost : 0,
             statMultiplier: parseNumber(row[statI], isBreakthrough ? NaN : 1),
         };
     }).filter((row) => row.level > 0);
@@ -125,10 +127,10 @@ function parseGacha(table: ParsedCsvTable): GachaRates {
         byKey.set(key.toLowerCase(), parseNumber(row[pI]));
     }
 
-    const sHero = byKey.get('herostier') ?? byKey.get('s') ?? 0.03;
-    const aHero = byKey.get('heroatier') ?? byKey.get('a') ?? 0.22;
+    const aRankHero = byKey.get('herostier') ?? byKey.get('s') ?? 0.03;
+    const sRankHero = byKey.get('heroatier') ?? byKey.get('a') ?? 0.22;
     const arms = byKey.get('arms') ?? 0.75;
-    return { sHero, aHero, arms };
+    return { aRankHero, sRankHero, arms };
 }
 
 function parseLeagues(table: ParsedCsvTable): LeagueRow[] {
@@ -139,8 +141,9 @@ function parseLeagues(table: ParsedCsvTable): LeagueRow[] {
     const maxI = optionalColumn(table.headers, ['maxrating']);
     const winI = optionalColumn(table.headers, ['winrating']);
     const lossI = optionalColumn(table.headers, ['lossrating']);
-    const goldI = col(['goldincomemultiplier']);
-    const expI = col(['expincomemultiplier']);
+    const resetI = optionalColumn(table.headers, ['resetrating']);
+    const goldI = optionalColumn(table.headers, ['goldincomemultiplier']);
+    const expI = optionalColumn(table.headers, ['expincomemultiplier']);
     const tierI = optionalColumn(table.headers, ['slotmachinetier']);
 
     const rows = table.rows.map((row) => ({
@@ -150,15 +153,16 @@ function parseLeagues(table: ParsedCsvTable): LeagueRow[] {
         maxRating: maxI >= 0 ? parseNumber(row[maxI]) : 0,
         winRating: winI >= 0 ? parseNumber(row[winI]) : 0,
         lossRating: lossI >= 0 ? parseNumber(row[lossI]) : 0,
-        goldIncomeMultiplier: parseNumber(row[goldI], 1),
-        expIncomeMultiplier: parseNumber(row[expI], 1),
+        resetRating: resetI >= 0 ? parseNumber(row[resetI]) : 0,
+        goldIncomeMultiplier: goldI >= 0 ? parseNumber(row[goldI], 1) : 1,
+        expIncomeMultiplier: expI >= 0 ? parseNumber(row[expI], 1) : 1,
         slotMachineTier: tierI >= 0 ? (row[tierI] ?? '') : '',
     })).filter((row) => row.id !== '');
 
     if (rows.length === 0) {
         throw new Error('PvpLeaguesConfig: нет лиг');
     }
-    return rows;
+    return rows.sort((a, b) => a.minRating - b.minRating);
 }
 
 function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {

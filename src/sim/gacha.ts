@@ -1,27 +1,41 @@
+import { parseUnitRank } from './ranks.js';
 import type { GachaRates, SimParams, TierUpRow } from './types.js';
 
-/** Expected pulls until an S drop, with hard pity at `pity` (counter resets on S). */
-export function expectedPullsToSHero(sRate: number, pity: number): number {
-    const p = Math.min(1, Math.max(0, sRate));
-    const n = Math.max(1, Math.floor(pity));
+/**
+ * Expected pulls until the pity-tracked drop.
+ * Client: if `progress >= MaxPityValue` at the start of a pull, force HeroATier.
+ * Progress increments on non-HeroATier, so the guarantee is pull `pity + 1` after `pity` misses.
+ */
+export function expectedPullsWithHardPity(rate: number, pity: number): number {
+    const p = Math.min(1, Math.max(0, rate));
+    const n = Math.max(0, Math.floor(pity));
     if (p <= 0) {
-        return n;
+        return n + 1;
     }
     if (p >= 1) {
         return 1;
     }
     const q = 1 - p;
-    const qn1 = q ** (n - 1);
-    const qn = qn1 * q;
-    const sum = (1 - n * qn1 + (n - 1) * qn) / (p * p);
-    return p * sum + n * qn1;
+    const qn = q ** n;
+    return (1 - q * qn) / p;
+}
+
+export function expectedPullsGeometric(rate: number): number {
+    const p = Math.min(1, Math.max(0, rate));
+    if (p <= 0) {
+        return Number.POSITIVE_INFINITY;
+    }
+    return 1 / p;
 }
 
 export interface GachaEv {
     pullsToS: number;
-    pullsToNamedShard: number;
+    pullsToA: number;
+    pullsToNamedSCopy: number;
+    pullsToNamedACopy: number;
     pullsToFactionEmblem: number;
     dustPerNamedShard: number;
+    dustPerNamedAShard: number;
     dustPerFactionEmblem: number;
     dustPerHeroFullAscension: number;
     dustPerSquadFullAscension: number;
@@ -29,29 +43,49 @@ export interface GachaEv {
     armsPerHero: number;
 }
 
+export function relevantTierUps(tierUps: TierUpRow[], startingHeroTier: string): TierUpRow[] {
+    const minRank = parseUnitRank(startingHeroTier);
+    if (minRank <= 0) {
+        return tierUps;
+    }
+    return tierUps.filter((row) => {
+        const current = parseUnitRank(row.currentTier);
+        return current === 0 || current >= minRank;
+    });
+}
+
 export function computeGachaEv(
     gacha: GachaRates,
     tierUps: TierUpRow[],
     params: SimParams,
 ): GachaEv {
-    const pullsToS = expectedPullsToSHero(gacha.sHero, params.gachaPity);
-    const namedGivenS = 1 / Math.max(1, params.sHeroCount);
-    const pullsToNamedShard = pullsToS / namedGivenS;
+    const pullsToS = expectedPullsWithHardPity(gacha.sRankHero, params.gachaPity);
+    const pullsToA = expectedPullsGeometric(gacha.aRankHero);
+    const pullsToNamedSCopy = pullsToS * Math.max(1, params.sHeroCount);
+    const pullsToNamedACopy = pullsToA * Math.max(1, params.aHeroCount);
     const emblemRate = gacha.arms / Math.max(1, params.factionCount);
     const pullsToFactionEmblem = emblemRate > 0 ? 1 / emblemRate : Number.POSITIVE_INFINITY;
 
-    const dustPerNamedShard = pullsToNamedShard * params.dustPerPull;
+    const dustPerNamedShard = pullsToNamedSCopy * params.dustPerPull;
+    const dustPerNamedAShard = pullsToNamedACopy * params.dustPerPull;
     const dustPerFactionEmblem = pullsToFactionEmblem * params.dustPerPull;
 
-    const shardsPerHero = tierUps.reduce((sum, row) => sum + row.shards, 0);
-    const armsPerHero = tierUps.reduce((sum, row) => sum + row.arms, 0);
-    const dustPerHeroFullAscension = shardsPerHero * dustPerNamedShard + armsPerHero * dustPerFactionEmblem;
+    const usedTiers = relevantTierUps(tierUps, params.startingHeroTier);
+    const shardsPerHero = usedTiers.reduce((sum, row) => sum + row.shards, 0);
+    const armsPerHero = usedTiers.reduce((sum, row) => sum + row.arms, 0);
+    const dustPerHeroFullAscension = usedTiers.reduce(
+        (sum, row) => sum + row.shards * shardDust(row, dustPerNamedShard, dustPerNamedAShard) + row.arms * dustPerFactionEmblem,
+        0,
+    );
 
     return {
         pullsToS,
-        pullsToNamedShard,
+        pullsToA,
+        pullsToNamedSCopy,
+        pullsToNamedACopy,
         pullsToFactionEmblem,
         dustPerNamedShard,
+        dustPerNamedAShard,
         dustPerFactionEmblem,
         dustPerHeroFullAscension,
         dustPerSquadFullAscension: dustPerHeroFullAscension * params.heroCount,
@@ -65,5 +99,13 @@ export function dustCostForTierUp(
     ev: GachaEv,
     heroCount: number,
 ): number {
-    return heroCount * (row.shards * ev.dustPerNamedShard + row.arms * ev.dustPerFactionEmblem);
+    return heroCount * (row.shards * shardDust(row, ev.dustPerNamedShard, ev.dustPerNamedAShard) + row.arms * ev.dustPerFactionEmblem);
+}
+
+function shardDust(row: TierUpRow, sDust: number, aDust: number): number {
+    const rank = parseUnitRank(row.currentTier);
+    if (rank > 0 && rank < parseUnitRank('S')) {
+        return aDust;
+    }
+    return sDust;
 }

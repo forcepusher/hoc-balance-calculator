@@ -35,17 +35,17 @@ export const CONFIG_TABLES: readonly ConfigTableDef[] = [
     },
     {
         id: 'GachaBaseDrops',
-        description: 'Шансы дропа',
+        description: 'HeroSTier → A-ранг, HeroATier → S-ранг + pity',
         defaultUrl: 'https://docs.google.com/spreadsheets/d/12ChBhfVgYk3JbBfrgOznM5VQI0em_x0w0shNzuQYWC8',
     },
     {
         id: 'PvpLeaguesConfig',
-        description: 'Логика перемещения по лигам; лиги увеличивают доход золота со слот-машины (GoldIncomeMultiplier)',
+        description: 'Рейтинг лиг (Min/Max/Win/Loss) и GoldIncomeMultiplier для слотов',
         defaultUrl: 'https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4',
     },
     {
         id: 'PvpRewardPool',
-        description: 'Награды за PvP бой',
+        description: 'Награды за победу PvP (поражения в клиенте без дропа)',
         defaultUrl: 'https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE',
     },
     {

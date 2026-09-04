@@ -81,7 +81,7 @@ export class ConfigTablesApp {
         root.appendChild(title);
 
         const intro = document.createElement('p');
-        intro.textContent = 'EV-симулятор активного дня: слоты + арена + 5 реклам. 5 героев качаются синхронно. Внешние ивенты не учитываются.';
+        intro.textContent = 'EV-симулятор активного дня по формулам клиента/сервера: слоты + арена + реклама. Энергия с рекламы и сундуков крутится снова. 5 героев качаются синхронно. Почта, квесты и ивенты не учитываются.';
         intro.style.cssText = 'margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;';
         root.appendChild(intro);
 
@@ -141,27 +141,39 @@ export class ConfigTablesApp {
         const p = DEFAULT_SIM_PARAMS;
         grid.append(
             this.paramField('heroCount', 'Герои в отряде', p.heroCount, 1),
-            this.paramField('energyPerDay', 'Энергия / сутки', p.energyPerDay, 1),
+            this.paramField('energyRegenIntervalSeconds', 'Реген энергии, сек', p.energyRegenIntervalSeconds, 1),
+            this.paramField('energyPerTick', 'Энергии за тик', p.energyPerTick, 1),
+            this.paramField('spinEnergyCost', 'Энергии за спин', p.spinEnergyCost, 1),
             this.paramField('adsPerDay', 'Реклама / сутки', p.adsPerDay, 1),
             this.paramField('winRatePct', 'Винрейт PvP %', p.winRate * 100, 1),
             this.paramField('dustPerPull', 'Пыль за 1 крутку', p.dustPerPull, 1),
             this.paramField('sHeroCount', 'Герои S в пуле', p.sHeroCount, 1),
+            this.paramField('aHeroCount', 'Герои A в пуле', p.aHeroCount, 1),
             this.paramField('factionCount', 'Фракций (гербы)', p.factionCount, 1),
-            this.paramField('gachaPity', 'Гарант S (крутка)', p.gachaPity, 1),
+            this.paramField('gachaPity', 'Pity (промахов до гаранта)', p.gachaPity, 1),
+            this.paramField('startingHeroTier', 'Стартовый ранг героев', p.startingHeroTier, 0, false, true),
             this.paramField('maxDays', 'Макс. дней', p.maxDays, 1),
         );
         wrap.appendChild(grid);
+
+        const flags = document.createElement('div');
+        flags.style.cssText = 'display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;';
+        flags.append(
+            this.checkboxField('leagueByRating', 'Лиги по рейтингу (как в игре)', p.leagueProgression === 'rating'),
+            this.checkboxField('applyPvpLossRewards', 'Награды за поражение PvP', p.applyPvpLossRewards),
+        );
+        wrap.appendChild(flags);
 
         const extra = document.createElement('div');
         extra.style.cssText = 'display: grid; gap: 10px; margin-top: 10px;';
         extra.append(
             this.paramField('checkpoints', 'Чекпоинты уровней', p.checkpoints.join(', '), 0, true),
-            this.paramField('leagueUnlockLevels', 'Уровни открытия лиг', p.leagueUnlockLevels.join(', '), 0, true),
+            this.paramField('leagueUnlockLevels', 'Уровни открытия лиг (если рейтинг выключен)', p.leagueUnlockLevels.join(', '), 0, true),
         );
         wrap.appendChild(extra);
 
         const hint = document.createElement('div');
-        hint.textContent = 'Лига 2 (Серебро) с уровня 40 — как в ТЗ; дальше 60 / 80 / 100 / 120 / 140. Возвышение (осколки/гербы) списывается после брейкпоинтов 20/40/60/80.';
+        hint.textContent = 'Клиент: +1 энергия / 300 с ≈ 288/сутки, спин стоит 1, крутка гачи 100 пыли, pity на HeroATier (S). Возвышение списывается после брейкпоинтов. Стартовый ранг S — герои не платят ступени A→S.';
         hint.style.cssText = 'margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;';
         wrap.appendChild(hint);
         return wrap;
@@ -173,6 +185,7 @@ export class ConfigTablesApp {
         value: number | string,
         step: number,
         wide = false,
+        text = false,
     ): HTMLElement {
         const wrap = document.createElement('label');
         wrap.style.cssText = `display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #bdbdbd;${wide ? ' grid-column: 1 / -1;' : ''}`;
@@ -180,7 +193,7 @@ export class ConfigTablesApp {
 
         const input = document.createElement('input');
         input.value = String(value);
-        if (!wide) {
+        if (!wide && !text) {
             input.type = 'number';
             input.min = '0';
             input.step = String(step || 1);
@@ -196,6 +209,17 @@ export class ConfigTablesApp {
         ].join(';');
         this.paramInputs.set(key, input);
         wrap.appendChild(input);
+        return wrap;
+    }
+
+    private checkboxField(key: string, label: string, checked: boolean): HTMLElement {
+        const wrap = document.createElement('label');
+        wrap.style.cssText = 'display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cfcfcf; cursor: pointer;';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = checked;
+        this.paramInputs.set(key, input);
+        wrap.append(input, label);
         return wrap;
     }
 
@@ -399,18 +423,29 @@ export class ConfigTablesApp {
             return parsed.length > 0 ? parsed : fallback;
         };
         const d = DEFAULT_SIM_PARAMS;
+        const checked = (key: string, fallback: boolean): boolean => this.paramInputs.get(key)?.checked ?? fallback;
+        const text = (key: string, fallback: string): string => {
+            const raw = this.paramInputs.get(key)?.value?.trim();
+            return raw ? raw : fallback;
+        };
         return {
             heroCount: Math.max(1, Math.round(num('heroCount', d.heroCount))),
-            energyPerDay: Math.max(0, num('energyPerDay', d.energyPerDay)),
+            energyRegenIntervalSeconds: Math.max(1, num('energyRegenIntervalSeconds', d.energyRegenIntervalSeconds)),
+            energyPerTick: Math.max(0, num('energyPerTick', d.energyPerTick)),
+            spinEnergyCost: Math.max(0.0001, num('spinEnergyCost', d.spinEnergyCost)),
             adsPerDay: Math.max(0, num('adsPerDay', d.adsPerDay)),
             winRate: Math.min(1, Math.max(0, num('winRatePct', d.winRate * 100) / 100)),
             dustPerPull: Math.max(0, num('dustPerPull', d.dustPerPull)),
             sHeroCount: Math.max(1, Math.round(num('sHeroCount', d.sHeroCount))),
+            aHeroCount: Math.max(1, Math.round(num('aHeroCount', d.aHeroCount))),
             factionCount: Math.max(1, Math.round(num('factionCount', d.factionCount))),
             gachaPity: Math.max(1, Math.round(num('gachaPity', d.gachaPity))),
+            startingHeroTier: text('startingHeroTier', d.startingHeroTier),
             maxDays: Math.max(1, Math.round(num('maxDays', d.maxDays))),
             checkpoints: list('checkpoints', d.checkpoints),
+            leagueProgression: checked('leagueByRating', d.leagueProgression === 'rating') ? 'rating' : 'squadLevel',
             leagueUnlockLevels: list('leagueUnlockLevels', d.leagueUnlockLevels),
+            applyPvpLossRewards: checked('applyPvpLossRewards', d.applyPvpLossRewards),
         };
     }
 
@@ -445,7 +480,7 @@ export class ConfigTablesApp {
         this.resultsEl.appendChild(heading);
 
         this.resultsEl.appendChild(this.kvLine(
-            `Дней: ${result.daysRun} · Уровень отряда: ${result.finalLevel} / ${result.maxLevel} · Лига: ${result.finalLeagueName}`,
+            `Дней: ${result.daysRun} · Уровень отряда: ${result.finalLevel} / ${result.maxLevel} · Лига: ${result.finalLeagueName} · Рейтинг: ${this.fmt(result.finalRating)}`,
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Чекпоинты (скорость)'));
@@ -476,21 +511,26 @@ export class ConfigTablesApp {
         this.resultsEl.appendChild(this.simpleTable(
             ['Метрика', 'Значение'],
             [
-                ['Круток до S (с гарантом 80)', this.fmt(g.pullsToS)],
-                ['Пыли на 1 именной осколок', this.fmt(g.dustPerNamedShard)],
+                ['Круток до S-героя (HeroATier + pity)', this.fmt(g.pullsToS)],
+                ['Круток до A-героя (HeroSTier, без pity)', this.fmt(g.pullsToA)],
+                ['Пыли на 1 копию именного S', this.fmt(g.dustPerNamedShard)],
+                ['Пыли на 1 копию именного A', this.fmt(g.dustPerNamedAShard)],
                 ['Пыли на 1 фракционный герб', this.fmt(g.dustPerFactionEmblem)],
-                [`Полное возвышение 1 героя (${g.shardsPerHero} оск. + ${g.armsPerHero} герб.)`, this.fmt(g.dustPerHeroFullAscension)],
-                ['Полное возвышение отряда', this.fmt(g.dustPerSquadFullAscension)],
+                [`Возвышение 1 героя с выбранного ранга (${g.shardsPerHero} копий + ${g.armsPerHero} герб.)`, this.fmt(g.dustPerHeroFullAscension)],
+                ['Возвышение отряда', this.fmt(g.dustPerSquadFullAscension)],
             ],
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Дневной доход по лигам'));
         this.resultsEl.appendChild(this.simpleTable(
-            ['Лига', 'Спины', 'PvP боёв', 'Золото', 'Опыт', 'Эссенция', 'Пыль'],
+            ['Лига', 'Спины', 'Реген эн.', 'Рекл. эн.', 'PvP боёв', 'Сундуки', 'Золото', 'Опыт', 'Эссенция', 'Пыль'],
             result.incomeByLeague.map((row) => [
                 row.leagueName,
                 this.fmt(row.income.spins),
+                this.fmt(row.income.regenEnergy),
+                this.fmt(row.income.adEnergy),
                 this.fmt(row.income.pvpFights),
+                this.fmt(row.income.chestsOpened),
                 this.fmt(row.income.total.gold),
                 this.fmt(row.income.total.exp),
                 this.fmt(row.income.total.essence),
