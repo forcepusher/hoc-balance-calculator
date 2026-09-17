@@ -54,6 +54,16 @@ export const RESOURCE_LABELS: Record<ResourceId, string> = {
     dust: 'Астральная пыль',
 };
 
+export const RARITY_COLUMNS = [
+    'Common',
+    'Uncommon',
+    'Rare',
+    'Epic',
+    'Legendary',
+    'Mythical',
+    'Divine',
+] as const;
+
 export interface LevelRow {
     level: number;
     expCost: number;
@@ -94,7 +104,9 @@ export interface LeagueRow {
     lossRating: number;
     goldIncomeMultiplier: number;
     expIncomeMultiplier: number;
-    slotMachineTier: string;
+    slotMachineRarity: string;
+    resetLeagueId: string;
+    resetRating: number;
 }
 
 export interface PvpRewardRow {
@@ -106,24 +118,27 @@ export interface PvpRewardRow {
     opensChest: boolean;
 }
 
-export interface WeightedDrop {
+export interface ChestRewardRow {
     key: string;
-    probability: number;
     itemType: string;
-    minAmount: number;
-    maxAmount: number;
-    affectedByLeague: boolean;
+    probability: number;
+    amountsByRarity: Record<string, number>;
 }
 
-export interface ChestConfig {
-    drops: WeightedDrop[];
-    dropCounts: Array<{ count: number; probability: number }>;
-    leagueMultiplier: Map<string, number>;
+export interface ChestTables {
+    fixed: ChestRewardRow[];
+    random: ChestRewardRow[];
 }
 
-export interface AdConfig {
-    drops: WeightedDrop[];
-    leagueMultiplier: Map<string, number>;
+export interface SheetDailyIncome {
+    unscaled: Resources;
+    scaled: Resources;
+    unscaledEnergy: number;
+    scaledEnergy: number;
+}
+
+export interface OtherDailyIncome extends Resources {
+    energy: number;
 }
 
 export interface GameConfig {
@@ -133,14 +148,14 @@ export interface GameConfig {
     gacha: GachaRates;
     leagues: LeagueRow[];
     pvpRewards: PvpRewardRow[];
-    ads: AdConfig;
-    chest: ChestConfig;
+    chests: ChestTables;
+    dailyIncome: SheetDailyIncome;
 }
 
 export interface SimParams {
     heroCount: number;
     energyPerDay: number;
-    adsPerDay: number;
+    spinEnergyCost: number;
     winRate: number;
     dustPerPull: number;
     sHeroCount: number;
@@ -148,28 +163,27 @@ export interface SimParams {
     gachaPity: number;
     maxDays: number;
     checkpoints: number[];
-    /** Squad level at which each league (by table order) starts applying next day. */
-    leagueUnlockLevels: number[];
+    startLeagueIndex: number;
+    startRating: number;
+    weeklyResetEveryDays: number;
+    weeklyResetRatingBonus: number;
+    otherDaily: OtherDailyIncome;
 }
 
 export const DEFAULT_SIM_PARAMS: SimParams = {
     heroCount: 5,
-    energyPerDay: 432,
-    adsPerDay: 5,
-    winRate: 0.9,
+    energyPerDay: 288,
+    spinEnergyCost: 1,
+    winRate: 0.55,
     dustPerPull: 10,
     sHeroCount: 8,
     factionCount: 4,
     gachaPity: 80,
     maxDays: 10000,
-    checkpoints: checkpointsEvery(20, 240),
-    leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140],
+    checkpoints: [20, 60, 80, 120, 240],
+    startLeagueIndex: 0,
+    startRating: 0,
+    weeklyResetEveryDays: 7,
+    weeklyResetRatingBonus: 100,
+    otherDaily: { gold: 0, exp: 0, essence: 0, dust: 0, energy: 0 },
 };
-
-function checkpointsEvery(step: number, maxLevel: number): number[] {
-    const levels: number[] = [];
-    for (let level = step; level <= maxLevel; level += step) {
-        levels.push(level);
-    }
-    return levels;
-}

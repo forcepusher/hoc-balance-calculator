@@ -5,8 +5,9 @@ export const CONFIG_TABLE_IDS = [
     'GachaBaseDrops',
     'PvpLeaguesConfig',
     'PvpRewardPool',
-    'PvpAdRewardPool',
-    'PvpChestRewardPool',
+    'ChestT3Rewards',
+    'ChestT3RND',
+    'DailyIncome',
 ] as const;
 
 export type ConfigTableId = (typeof CONFIG_TABLE_IDS)[number];
@@ -40,22 +41,27 @@ export const CONFIG_TABLES: readonly ConfigTableDef[] = [
     },
     {
         id: 'PvpLeaguesConfig',
-        description: 'Логика перемещения по лигам; лиги увеличивают доход золота со слот-машины (GoldIncomeMultiplier)',
+        description: 'Лиги: рейтинг, GoldIncomeMultiplier, ExpIncomeMultiplier, SlotMachineRarity',
         defaultUrl: 'https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4',
     },
     {
         id: 'PvpRewardPool',
-        description: 'Награды за PvP бой',
+        description: 'Награды за победу и поражение PvP',
         defaultUrl: 'https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE',
     },
     {
-        id: 'PvpAdRewardPool',
-        description: 'Награды за рекламу',
-        defaultUrl: 'https://docs.google.com/spreadsheets/d/1iQePyPVaX1XKYNIJ-0VGvygkVEeSX9gDaBXBPEsN5hs',
+        id: 'ChestT3Rewards',
+        description: 'Гарантированные награды сундука за победу PvP',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1yM32jzi4ELnNvoww9oRK0uLUx2kGX2k-Fxu0hYd_R-c',
     },
     {
-        id: 'PvpChestRewardPool',
-        description: 'Награды из PvP сундука',
-        defaultUrl: 'https://docs.google.com/spreadsheets/d/14gHasZa7vKzxm7UKKJEKvqJU3VZGE-q_1RZnbu0iG-A',
+        id: 'ChestT3RND',
+        description: 'Дополнительная награда сундука (один ролл по шансам)',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/1nGPrUjsYUB63XCKMPy3nqmshcSrNwOlPTedi_zwqUKo',
+    },
+    {
+        id: 'DailyIncome',
+        description: 'Доп. ежедневный доход (дейлики, ивенты, БП)',
+        defaultUrl: 'https://docs.google.com/spreadsheets/d/15I_LuwR7KChUK_mBmpJJ2ji2VlRh-vO7xJOoT_mbJTU',
     },
 ];

@@ -1,17 +1,18 @@
 import type { ParsedCsvTable } from '../googleSheets.js';
 import type { ConfigTableId } from '../configTables.js';
 import type {
-    AdConfig,
-    ChestConfig,
+    ChestRewardRow,
+    ChestTables,
     GameConfig,
     GachaRates,
     LeagueRow,
     LevelRow,
     PvpRewardRow,
+    SheetDailyIncome,
     SlotDrop,
     TierUpRow,
-    WeightedDrop,
 } from './types.js';
+import { emptyResources, RARITY_COLUMNS } from './types.js';
 
 type TableMap = Map<ConfigTableId, ParsedCsvTable>;
 
@@ -23,8 +24,8 @@ export function parseGameConfig(tables: TableMap): GameConfig {
         gacha: parseGacha(requireTable(tables, 'GachaBaseDrops')),
         leagues: parseLeagues(requireTable(tables, 'PvpLeaguesConfig')),
         pvpRewards: parsePvpRewards(requireTable(tables, 'PvpRewardPool')),
-        ads: parseAds(requireTable(tables, 'PvpAdRewardPool')),
-        chest: parseChest(requireTable(tables, 'PvpChestRewardPool')),
+        chests: parseChests(requireTable(tables, 'ChestT3Rewards'), requireTable(tables, 'ChestT3RND')),
+        dailyIncome: parseDailyIncome(requireTable(tables, 'DailyIncome')),
     };
 }
 
@@ -139,9 +140,11 @@ function parseLeagues(table: ParsedCsvTable): LeagueRow[] {
     const maxI = optionalColumn(table.headers, ['maxrating']);
     const winI = optionalColumn(table.headers, ['winrating']);
     const lossI = optionalColumn(table.headers, ['lossrating']);
-    const goldI = col(['goldincomemultiplier']);
-    const expI = col(['expincomemultiplier']);
-    const tierI = optionalColumn(table.headers, ['slotmachinetier']);
+    const goldI = optionalColumn(table.headers, ['goldincomemultiplier']);
+    const expI = optionalColumn(table.headers, ['expincomemultiplier']);
+    const rarityI = optionalColumn(table.headers, ['slotmachinerarity', 'slotmachinetier']);
+    const resetLeagueI = optionalColumn(table.headers, ['resetleagueid']);
+    const resetRatingI = optionalColumn(table.headers, ['resetrating']);
 
     const rows = table.rows.map((row) => ({
         name: row[nameI] ?? '',
@@ -150,15 +153,17 @@ function parseLeagues(table: ParsedCsvTable): LeagueRow[] {
         maxRating: maxI >= 0 ? parseNumber(row[maxI]) : 0,
         winRating: winI >= 0 ? parseNumber(row[winI]) : 0,
         lossRating: lossI >= 0 ? parseNumber(row[lossI]) : 0,
-        goldIncomeMultiplier: parseNumber(row[goldI], 1),
-        expIncomeMultiplier: parseNumber(row[expI], 1),
-        slotMachineTier: tierI >= 0 ? (row[tierI] ?? '') : '',
+        goldIncomeMultiplier: goldI >= 0 ? parseNumber(row[goldI], 1) : 1,
+        expIncomeMultiplier: expI >= 0 ? parseNumber(row[expI], 1) : 1,
+        slotMachineRarity: rarityI >= 0 ? (row[rarityI] ?? 'Common') : 'Common',
+        resetLeagueId: resetLeagueI >= 0 ? (row[resetLeagueI] ?? '') : '',
+        resetRating: resetRatingI >= 0 ? parseNumber(row[resetRatingI]) : 0,
     })).filter((row) => row.id !== '');
 
     if (rows.length === 0) {
         throw new Error('PvpLeaguesConfig: нет лиг');
     }
-    return rows;
+    return rows.sort((a, b) => a.minRating - b.minRating);
 }
 
 function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
@@ -168,7 +173,7 @@ function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
     const goldI = col(['gold']);
     const expI = col(['heroexp', 'exp']);
     const dustI = col(['astraldust', 'dust']);
-    const chestI = col(['pvpchest', 'chest']);
+    const chestI = optionalColumn(table.headers, ['pvpchest', 'chest']);
 
     const rows = table.rows.map((row) => {
         const resultRaw = (row[resultI] ?? '').toLowerCase();
@@ -179,7 +184,7 @@ function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
             gold: parseNumber(row[goldI]),
             exp: parseNumber(row[expI]),
             dust: parseNumber(row[dustI]),
-            opensChest: parseBool(row[chestI]),
+            opensChest: chestI >= 0 ? parseBool(row[chestI]) : result === 'Win',
         };
     }).filter((row) => row.leagueId !== '');
 
@@ -189,111 +194,165 @@ function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
     return rows;
 }
 
-function parseAds(table: ParsedCsvTable): AdConfig {
-    const drops: WeightedDrop[] = [];
-    const leagueMultiplier = new Map<string, number>();
+export function parseChests(fixedTable: ParsedCsvTable, randomTable: ParsedCsvTable): ChestTables {
+    const fixed = parseChestRewardTable(fixedTable, true);
+    const random = parseChestRewardTable(randomTable, false);
+    if (fixed.length === 0 && random.length === 0) {
+        throw new Error('ChestT3: нет наград');
+    }
+    return { fixed, random };
+}
 
-    const header = table.matrix[0] ?? [];
+function parseChestRewardTable(table: ParsedCsvTable, guaranteed: boolean): ChestRewardRow[] {
+    const header = table.matrix[0] ?? table.headers;
     const col = columnIndex(header);
     const keyI = optionalColumn(header, ['key']);
+    if (keyI < 0) {
+        throw new Error('ChestT3: нет колонки Key');
+    }
     const pI = optionalColumn(header, ['probability', 'chance']);
-    const typeI = optionalColumn(header, ['itemtype']);
-    const minI = optionalColumn(header, ['baseminamount', 'minamount']);
-    const maxI = optionalColumn(header, ['basemaxamount', 'maxamount']);
-    const affectedI = optionalColumn(header, ['isaffectedbyleague']);
-    const leagueI = optionalColumn(header, ['leagueid']);
-    const multI = optionalColumn(header, ['admultiplier']);
+    const rarityIndex: Record<string, number> = {};
+    for (const rarity of RARITY_COLUMNS) {
+        const index = optionalColumn(header, [rarity.toLowerCase()]);
+        if (index >= 0) {
+            rarityIndex[rarity] = index;
+        }
+    }
 
+    const rows: ChestRewardRow[] = [];
     for (const row of table.matrix.slice(1)) {
-        const key = keyI >= 0 ? (row[keyI] ?? '').trim() : '';
-        const itemType = typeI >= 0 ? (row[typeI] ?? '').trim() : '';
-        if (key !== '' && itemType !== '' && pI >= 0) {
-            drops.push({
-                key,
-                probability: parseNumber(row[pI]),
-                itemType,
-                minAmount: minI >= 0 ? parseNumber(row[minI]) : 0,
-                maxAmount: maxI >= 0 ? parseNumber(row[maxI]) : 0,
-                affectedByLeague: affectedI >= 0 ? parseBool(row[affectedI]) : false,
-            });
+        const key = (row[keyI] ?? '').trim();
+        if (!key || /^key$/i.test(key)) {
+            continue;
         }
-
-        const leagueId = leagueI >= 0 ? (row[leagueI] ?? '').trim() : '';
-        if (leagueId.toLowerCase().startsWith('league') && multI >= 0) {
-            leagueMultiplier.set(leagueId, parseNumber(row[multI], 1));
+        const probability = guaranteed ? 1 : (pI >= 0 ? parseNumber(row[pI]) : 0);
+        if (!guaranteed && probability <= 0) {
+            continue;
         }
+        const amountsByRarity: Record<string, number> = {};
+        for (const [rarity, index] of Object.entries(rarityIndex)) {
+            amountsByRarity[rarity] = parseNumber(row[index]);
+        }
+        rows.push({
+            key,
+            itemType: key,
+            probability,
+            amountsByRarity,
+        });
     }
-
-    if (drops.length === 0) {
-        throw new Error('PvpAdRewardPool: нет дропов');
-    }
-    return { drops, leagueMultiplier };
+    return rows;
 }
 
-export function parseChest(table: ParsedCsvTable): ChestConfig {
-    const drops: WeightedDrop[] = [];
-    const dropCounts: Array<{ count: number; probability: number }> = [];
-    const leagueMultiplier = new Map<string, number>();
-    let mode: 'drops' | 'dropCount' | 'league' = 'drops';
+export function parseDailyIncome(table: ParsedCsvTable): SheetDailyIncome {
+    const unscaled = emptyResources();
+    const scaled = emptyResources();
+    let unscaledEnergy = 0;
+    let scaledEnergy = 0;
 
-    for (const row of table.matrix) {
-        const first = (row[0] ?? '').trim();
-        const second = (row[1] ?? '').trim();
-        if (first === '' && second === '') {
-            continue;
-        }
+    const header = table.matrix[0] ?? [];
+    const looksLikeSplit = normalizeHeader(header[0] ?? '').includes('notaffected')
+        || normalizeHeader(header[0] ?? '').includes('независ');
 
-        if (/^key$/i.test(first)) {
-            mode = 'drops';
-            continue;
-        }
-        if (/^dropcount$/i.test(first)) {
-            mode = 'dropCount';
-            continue;
-        }
-        if (/^leagueid$/i.test(first)) {
-            mode = 'league';
-            continue;
-        }
-
-        if (mode === 'drops') {
-            drops.push({
-                key: first,
-                probability: parseNumber(row[1]),
-                itemType: first,
-                minAmount: parseNumber(row[2]),
-                maxAmount: parseNumber(row[3]),
-                affectedByLeague: parseBool(row[4]),
+    if (looksLikeSplit) {
+        for (const row of table.matrix.slice(1)) {
+            addNamedAmount(row[0], row[1], unscaled, (energy) => {
+                unscaledEnergy += energy;
             });
-            continue;
-        }
-        if (mode === 'dropCount') {
-            dropCounts.push({
-                count: parseNumber(first),
-                probability: parseNumber(row[1]),
+            addNamedAmount(row[2], row[3], scaled, (energy) => {
+                scaledEnergy += energy;
             });
-            continue;
         }
-        leagueMultiplier.set(first, parseNumber(row[1], 1));
+    } else {
+        const col = columnIndex(header.length > 0 ? header : table.headers);
+        const keyI = optionalColumn(header, ['key', 'item', 'resource']);
+        const valueI = optionalColumn(header, ['value', 'amount']);
+        const affectedI = optionalColumn(header, ['isaffectedbyleague', 'affectedbyleague']);
+        for (const row of table.matrix.slice(1)) {
+            const name = keyI >= 0 ? row[keyI] : row[0];
+            const value = valueI >= 0 ? row[valueI] : row[1];
+            const affected = affectedI >= 0 && parseBool(row[affectedI]);
+            addNamedAmount(name, value, affected ? scaled : unscaled, (energy) => {
+                if (affected) {
+                    scaledEnergy += energy;
+                } else {
+                    unscaledEnergy += energy;
+                }
+            });
+        }
     }
 
-    if (drops.length === 0) {
-        throw new Error('PvpChestRewardPool: нет дропов');
-    }
-    if (dropCounts.length === 0) {
-        dropCounts.push({ count: 1, probability: 1 });
-    }
-    return { drops, dropCounts, leagueMultiplier };
+    return { unscaled, scaled, unscaledEnergy, scaledEnergy };
 }
 
-export function describeChestParse(chest: ChestConfig): string {
-    const expectedItems = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
+function addNamedAmount(
+    name: string | undefined,
+    raw: string | undefined,
+    into: SheetDailyIncome['unscaled'],
+    onEnergy: (energy: number) => void,
+): void {
+    const key = (name ?? '').trim();
+    if (!key) {
+        return;
+    }
+    const amount = parseNumber(raw);
+    if (amount === 0) {
+        return;
+    }
+    const kind = normalizeItemType(key);
+    if (kind === 'gold') {
+        into.gold += amount;
+    } else if (kind === 'exp') {
+        into.exp += amount;
+    } else if (kind === 'dust') {
+        into.dust += amount;
+    } else if (kind === 'essence') {
+        into.essence += amount;
+    } else if (kind === 'energy') {
+        onEnergy(amount);
+    }
+}
+
+export function describeChestParse(chests: ChestTables): string {
+    const energy = chests.random.find((row) => normalizeItemType(row.itemType) === 'energy');
+    const energyP = energy?.probability;
     return [
-        `${chest.drops.length} дропов`,
-        `${chest.dropCounts.length} DropCount`,
-        `${chest.leagueMultiplier.size} лиг`,
-        `EV предметов ${expectedItems.toFixed(2)}`,
+        `${chests.fixed.length} фикс.`,
+        `${chests.random.length} RND`,
+        energyP !== undefined ? `энергия p=${energyP}` : 'без энергии',
     ].join(' · ');
+}
+
+export function describeDailyIncome(income: SheetDailyIncome): string {
+    return `без лиги: золото ${income.unscaled.gold}, опыт ${income.unscaled.exp} · с лигой: золото ${income.scaled.gold}, опыт ${income.scaled.exp}`;
+}
+
+export function normalizeItemType(itemType: string): string {
+    const raw = itemType.trim().toLowerCase();
+    if (raw === 'gold' || raw.includes('gold')) {
+        return 'gold';
+    }
+    if (raw === 'heroexp' || raw === 'exp' || raw.includes('exp')) {
+        return 'exp';
+    }
+    if (raw === 'astraldust' || raw === 'dust' || raw.includes('dust')) {
+        return 'dust';
+    }
+    if (raw.includes('essence')) {
+        return 'essence';
+    }
+    if (raw === 'energy') {
+        return 'energy';
+    }
+    if (raw === 'pvp' || raw === 'attack') {
+        return 'pvp';
+    }
+    if (raw === 'chest') {
+        return 'chest';
+    }
+    if (raw === 'pve' || raw === 'raid') {
+        return 'pve';
+    }
+    return raw;
 }
 
 function columnIndex(headers: string[]): (aliases: string[]) => number {

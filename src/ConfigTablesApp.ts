@@ -6,7 +6,7 @@ import {
     shouldRewritePastedSheetUrl,
     type ParsedCsvTable,
 } from './googleSheets.js';
-import { describeChestParse, parseChest, parseGameConfig } from './sim/parseGameConfig.js';
+import { describeChestParse, describeDailyIncome, parseChests, parseDailyIncome, parseGameConfig } from './sim/parseGameConfig.js';
 import { runSimulation, simulationReportCsv, type SimResult } from './sim/simulate.js';
 import { DEFAULT_SIM_PARAMS, RESOURCE_LABELS, type ResourceId, type SimParams } from './sim/types.js';
 
@@ -76,12 +76,12 @@ export class ConfigTablesApp {
         ].join(';');
 
         const title = document.createElement('h2');
-        title.textContent = 'HoC Balance — симуляция (альфа)';
+        title.textContent = 'HoC Balance — симуляция (альфа) V2';
         title.style.cssText = 'margin: 0 0 8px; font-size: 20px; font-weight: 600;';
         root.appendChild(title);
 
         const intro = document.createElement('p');
-        intro.textContent = 'EV-симулятор активного дня: слоты + арена + 5 реклам. 5 героев качаются синхронно. Внешние ивенты не учитываются.';
+        intro.textContent = 'EV-симулятор активного дня: слоты + арена + DailyIncome. Лиги по рейтингу с еженедельным сбросом. 5 героев качаются синхронно.';
         intro.style.cssText = 'margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;';
         root.appendChild(intro);
 
@@ -141,13 +141,17 @@ export class ConfigTablesApp {
         const p = DEFAULT_SIM_PARAMS;
         grid.append(
             this.paramField('heroCount', 'Герои в отряде', p.heroCount, 1),
-            this.paramField('energyPerDay', 'Энергия / сутки', p.energyPerDay, 1),
-            this.paramField('adsPerDay', 'Реклама / сутки', p.adsPerDay, 1),
+            this.paramField('energyPerDay', 'Реген энергии / сутки', p.energyPerDay, 1),
+            this.paramField('spinEnergyCost', 'Энергии за спин', p.spinEnergyCost, 1),
             this.paramField('winRatePct', 'Винрейт PvP %', p.winRate * 100, 1),
             this.paramField('dustPerPull', 'Пыль за 1 крутку', p.dustPerPull, 1),
             this.paramField('sHeroCount', 'Герои S в пуле', p.sHeroCount, 1),
             this.paramField('factionCount', 'Фракций (гербы)', p.factionCount, 1),
             this.paramField('gachaPity', 'Гарант S (крутка)', p.gachaPity, 1),
+            this.paramField('startLeagueIndex', 'Стартовая лига (1 = Бронза)', p.startLeagueIndex + 1, 1),
+            this.paramField('startRating', 'Стартовый рейтинг', p.startRating, 1),
+            this.paramField('weeklyResetEveryDays', 'Сброс лиги каждые N дней', p.weeklyResetEveryDays, 1),
+            this.paramField('weeklyResetRatingBonus', 'Рейтинг после сброса: min +', p.weeklyResetRatingBonus, 1),
             this.paramField('maxDays', 'Макс. дней', p.maxDays, 1),
         );
         wrap.appendChild(grid);
@@ -156,12 +160,27 @@ export class ConfigTablesApp {
         extra.style.cssText = 'display: grid; gap: 10px; margin-top: 10px;';
         extra.append(
             this.paramField('checkpoints', 'Чекпоинты уровней', p.checkpoints.join(', '), 0, true),
-            this.paramField('leagueUnlockLevels', 'Уровни открытия лиг', p.leagueUnlockLevels.join(', '), 0, true),
         );
         wrap.appendChild(extra);
 
+        const otherHeading = document.createElement('div');
+        otherHeading.textContent = 'Ручной Other Daily Income (поверх таблицы DailyIncome)';
+        otherHeading.style.cssText = 'font-weight: 600; font-size: 13px; margin: 12px 0 8px; color: #d0d0d0;';
+        wrap.appendChild(otherHeading);
+
+        const other = document.createElement('div');
+        other.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;';
+        other.append(
+            this.paramField('otherGold', 'Золото / день', p.otherDaily.gold, 1),
+            this.paramField('otherExp', 'Опыт / день', p.otherDaily.exp, 1),
+            this.paramField('otherEssence', 'Эссенция / день', p.otherDaily.essence, 1),
+            this.paramField('otherDust', 'Пыль / день', p.otherDaily.dust, 1),
+            this.paramField('otherEnergy', 'Энергия / день', p.otherDaily.energy, 1),
+        );
+        wrap.appendChild(other);
+
         const hint = document.createElement('div');
-        hint.textContent = 'Лига 2 (Серебро) с уровня 40 — как в ТЗ; дальше 60 / 80 / 100 / 120 / 140. Возвышение (осколки/гербы) списывается после брейкпоинтов 20/40/60/80.';
+        hint.textContent = 'Реген 288/сутки. WR 55%. Лига по рейтингу; множители новой лиги со следующего дня. Каждые 7 дней — минус 1 лига, рейтинг = нижняя граница + 100. Сундук T3 за каждую победу: фикс. награды + один RND.';
         hint.style.cssText = 'margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;';
         wrap.appendChild(hint);
         return wrap;
@@ -362,8 +381,15 @@ export class ConfigTablesApp {
     }
 
     private describeParsedTable(id: ConfigTableId, parsed: ParsedCsvTable): string {
-        if (id === 'PvpChestRewardPool') {
-            return describeChestParse(parseChest(parsed));
+        if (id === 'ChestT3Rewards' || id === 'ChestT3RND') {
+            const empty = { headers: ['Key'], rows: [], matrix: [['Key']] };
+            const chests = id === 'ChestT3Rewards'
+                ? parseChests(parsed, empty)
+                : parseChests(empty, parsed);
+            return describeChestParse(chests);
+        }
+        if (id === 'DailyIncome') {
+            return describeDailyIncome(parseDailyIncome(parsed));
         }
         const headerPreview = parsed.headers.filter((header) => header !== '').join(', ');
         return `${parsed.rows.length} строк · ${headerPreview}`;
@@ -402,7 +428,7 @@ export class ConfigTablesApp {
         return {
             heroCount: Math.max(1, Math.round(num('heroCount', d.heroCount))),
             energyPerDay: Math.max(0, num('energyPerDay', d.energyPerDay)),
-            adsPerDay: Math.max(0, num('adsPerDay', d.adsPerDay)),
+            spinEnergyCost: Math.max(0.0001, num('spinEnergyCost', d.spinEnergyCost)),
             winRate: Math.min(1, Math.max(0, num('winRatePct', d.winRate * 100) / 100)),
             dustPerPull: Math.max(0, num('dustPerPull', d.dustPerPull)),
             sHeroCount: Math.max(1, Math.round(num('sHeroCount', d.sHeroCount))),
@@ -410,7 +436,17 @@ export class ConfigTablesApp {
             gachaPity: Math.max(1, Math.round(num('gachaPity', d.gachaPity))),
             maxDays: Math.max(1, Math.round(num('maxDays', d.maxDays))),
             checkpoints: list('checkpoints', d.checkpoints),
-            leagueUnlockLevels: list('leagueUnlockLevels', d.leagueUnlockLevels),
+            startLeagueIndex: Math.max(0, Math.round(num('startLeagueIndex', d.startLeagueIndex + 1)) - 1),
+            startRating: Math.max(0, num('startRating', d.startRating)),
+            weeklyResetEveryDays: Math.max(0, Math.round(num('weeklyResetEveryDays', d.weeklyResetEveryDays))),
+            weeklyResetRatingBonus: num('weeklyResetRatingBonus', d.weeklyResetRatingBonus),
+            otherDaily: {
+                gold: Math.max(0, num('otherGold', d.otherDaily.gold)),
+                exp: Math.max(0, num('otherExp', d.otherDaily.exp)),
+                essence: Math.max(0, num('otherEssence', d.otherDaily.essence)),
+                dust: Math.max(0, num('otherDust', d.otherDaily.dust)),
+                energy: Math.max(0, num('otherEnergy', d.otherDaily.energy)),
+            },
         };
     }
 
@@ -445,7 +481,7 @@ export class ConfigTablesApp {
         this.resultsEl.appendChild(heading);
 
         this.resultsEl.appendChild(this.kvLine(
-            `Дней: ${result.daysRun} · Уровень отряда: ${result.finalLevel} / ${result.maxLevel} · Лига: ${result.finalLeagueName}`,
+            `Дней: ${result.daysRun} · Уровень отряда: ${result.finalLevel} / ${result.maxLevel} · Лига: ${result.finalLeagueName} · Рейтинг: ${this.fmt(result.finalRating)}`,
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Чекпоинты (скорость)'));
@@ -486,16 +522,23 @@ export class ConfigTablesApp {
 
         this.resultsEl.appendChild(this.sectionTitle('Дневной доход по лигам'));
         this.resultsEl.appendChild(this.simpleTable(
-            ['Лига', 'Спины', 'PvP боёв', 'Золото', 'Опыт', 'Эссенция', 'Пыль'],
+            ['Лига', 'Спины', 'PvP боёв', 'Сундуки', 'Золото', 'Опыт', 'Эссенция', 'Пыль'],
             result.incomeByLeague.map((row) => [
                 row.leagueName,
                 this.fmt(row.income.spins),
                 this.fmt(row.income.pvpFights),
+                this.fmt(row.income.chestsOpened),
                 this.fmt(row.income.total.gold),
                 this.fmt(row.income.total.exp),
                 this.fmt(row.income.total.essence),
                 this.fmt(row.income.total.dust),
             ]),
+        ));
+
+        this.resultsEl.appendChild(this.sectionTitle('Дней в лигах'));
+        this.resultsEl.appendChild(this.simpleTable(
+            ['Лига', 'Дней'],
+            result.daysInLeagues.map((row) => [row.leagueName, String(row.days)]),
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Остаток инвентаря'));

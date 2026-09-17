@@ -22,23 +22,28 @@ var CONFIG_TABLES = [
   },
   {
     id: "PvpLeaguesConfig",
-    description: "\u041B\u043E\u0433\u0438\u043A\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u044F \u043F\u043E \u043B\u0438\u0433\u0430\u043C; \u043B\u0438\u0433\u0438 \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0432\u0430\u044E\u0442 \u0434\u043E\u0445\u043E\u0434 \u0437\u043E\u043B\u043E\u0442\u0430 \u0441\u043E \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B (GoldIncomeMultiplier)",
+    description: "\u041B\u0438\u0433\u0438: \u0440\u0435\u0439\u0442\u0438\u043D\u0433, GoldIncomeMultiplier, ExpIncomeMultiplier, SlotMachineRarity",
     defaultUrl: "https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4"
   },
   {
     id: "PvpRewardPool",
-    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 PvP \u0431\u043E\u0439",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u0438 \u043F\u043E\u0440\u0430\u0436\u0435\u043D\u0438\u0435 PvP",
     defaultUrl: "https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE"
   },
   {
-    id: "PvpAdRewardPool",
-    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u0440\u0435\u043A\u043B\u0430\u043C\u0443",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1iQePyPVaX1XKYNIJ-0VGvygkVEeSX9gDaBXBPEsN5hs"
+    id: "ChestT3Rewards",
+    description: "\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0441\u0443\u043D\u0434\u0443\u043A\u0430 \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 PvP",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1yM32jzi4ELnNvoww9oRK0uLUx2kGX2k-Fxu0hYd_R-c"
   },
   {
-    id: "PvpChestRewardPool",
-    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0438\u0437 PvP \u0441\u0443\u043D\u0434\u0443\u043A\u0430",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/14gHasZa7vKzxm7UKKJEKvqJU3VZGE-q_1RZnbu0iG-A"
+    id: "ChestT3RND",
+    description: "\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043D\u0430\u0433\u0440\u0430\u0434\u0430 \u0441\u0443\u043D\u0434\u0443\u043A\u0430 (\u043E\u0434\u0438\u043D \u0440\u043E\u043B\u043B \u043F\u043E \u0448\u0430\u043D\u0441\u0430\u043C)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1nGPrUjsYUB63XCKMPy3nqmshcSrNwOlPTedi_zwqUKo"
+  },
+  {
+    id: "DailyIncome",
+    description: "\u0414\u043E\u043F. \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0434\u043E\u0445\u043E\u0434 (\u0434\u0435\u0439\u043B\u0438\u043A\u0438, \u0438\u0432\u0435\u043D\u0442\u044B, \u0411\u041F)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/15I_LuwR7KChUK_mBmpJJ2ji2VlRh-vO7xJOoT_mbJTU"
   }
 ];
 
@@ -172,6 +177,71 @@ function looksLikeHtml(text) {
   return sample.startsWith("<!doctype") || sample.startsWith("<html");
 }
 
+// src/sim/types.ts
+function emptyResources() {
+  return { gold: 0, exp: 0, essence: 0, dust: 0 };
+}
+function addResources(a, b) {
+  return {
+    gold: a.gold + b.gold,
+    exp: a.exp + b.exp,
+    essence: a.essence + b.essence,
+    dust: a.dust + b.dust
+  };
+}
+function scaleResources(a, factor) {
+  return {
+    gold: a.gold * factor,
+    exp: a.exp * factor,
+    essence: a.essence * factor,
+    dust: a.dust * factor
+  };
+}
+function canAfford(have, need) {
+  return have.gold + 1e-9 >= need.gold && have.exp + 1e-9 >= need.exp && have.essence + 1e-9 >= need.essence && have.dust + 1e-9 >= need.dust;
+}
+function subtractResources(have, need) {
+  return {
+    gold: have.gold - need.gold,
+    exp: have.exp - need.exp,
+    essence: have.essence - need.essence,
+    dust: have.dust - need.dust
+  };
+}
+var RESOURCE_IDS = ["gold", "exp", "essence", "dust"];
+var RESOURCE_LABELS = {
+  gold: "\u0417\u043E\u043B\u043E\u0442\u043E",
+  exp: "\u041E\u043F\u044B\u0442",
+  essence: "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F",
+  dust: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u044B\u043B\u044C"
+};
+var RARITY_COLUMNS = [
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Epic",
+  "Legendary",
+  "Mythical",
+  "Divine"
+];
+var DEFAULT_SIM_PARAMS = {
+  heroCount: 5,
+  energyPerDay: 288,
+  spinEnergyCost: 1,
+  winRate: 0.55,
+  dustPerPull: 10,
+  sHeroCount: 8,
+  factionCount: 4,
+  gachaPity: 80,
+  maxDays: 1e4,
+  checkpoints: [20, 60, 80, 120, 240],
+  startLeagueIndex: 0,
+  startRating: 0,
+  weeklyResetEveryDays: 7,
+  weeklyResetRatingBonus: 100,
+  otherDaily: { gold: 0, exp: 0, essence: 0, dust: 0, energy: 0 }
+};
+
 // src/sim/parseGameConfig.ts
 function parseGameConfig(tables) {
   return {
@@ -181,8 +251,8 @@ function parseGameConfig(tables) {
     gacha: parseGacha(requireTable(tables, "GachaBaseDrops")),
     leagues: parseLeagues(requireTable(tables, "PvpLeaguesConfig")),
     pvpRewards: parsePvpRewards(requireTable(tables, "PvpRewardPool")),
-    ads: parseAds(requireTable(tables, "PvpAdRewardPool")),
-    chest: parseChest(requireTable(tables, "PvpChestRewardPool"))
+    chests: parseChests(requireTable(tables, "ChestT3Rewards"), requireTable(tables, "ChestT3RND")),
+    dailyIncome: parseDailyIncome(requireTable(tables, "DailyIncome"))
   };
 }
 function requireTable(tables, id) {
@@ -284,9 +354,11 @@ function parseLeagues(table) {
   const maxI = optionalColumn(table.headers, ["maxrating"]);
   const winI = optionalColumn(table.headers, ["winrating"]);
   const lossI = optionalColumn(table.headers, ["lossrating"]);
-  const goldI = col(["goldincomemultiplier"]);
-  const expI = col(["expincomemultiplier"]);
-  const tierI = optionalColumn(table.headers, ["slotmachinetier"]);
+  const goldI = optionalColumn(table.headers, ["goldincomemultiplier"]);
+  const expI = optionalColumn(table.headers, ["expincomemultiplier"]);
+  const rarityI = optionalColumn(table.headers, ["slotmachinerarity", "slotmachinetier"]);
+  const resetLeagueI = optionalColumn(table.headers, ["resetleagueid"]);
+  const resetRatingI = optionalColumn(table.headers, ["resetrating"]);
   const rows = table.rows.map((row) => ({
     name: row[nameI] ?? "",
     id: row[idI] ?? "",
@@ -294,14 +366,16 @@ function parseLeagues(table) {
     maxRating: maxI >= 0 ? parseNumber(row[maxI]) : 0,
     winRating: winI >= 0 ? parseNumber(row[winI]) : 0,
     lossRating: lossI >= 0 ? parseNumber(row[lossI]) : 0,
-    goldIncomeMultiplier: parseNumber(row[goldI], 1),
-    expIncomeMultiplier: parseNumber(row[expI], 1),
-    slotMachineTier: tierI >= 0 ? row[tierI] ?? "" : ""
+    goldIncomeMultiplier: goldI >= 0 ? parseNumber(row[goldI], 1) : 1,
+    expIncomeMultiplier: expI >= 0 ? parseNumber(row[expI], 1) : 1,
+    slotMachineRarity: rarityI >= 0 ? row[rarityI] ?? "Common" : "Common",
+    resetLeagueId: resetLeagueI >= 0 ? row[resetLeagueI] ?? "" : "",
+    resetRating: resetRatingI >= 0 ? parseNumber(row[resetRatingI]) : 0
   })).filter((row) => row.id !== "");
   if (rows.length === 0) {
     throw new Error("PvpLeaguesConfig: \u043D\u0435\u0442 \u043B\u0438\u0433");
   }
-  return rows;
+  return rows.sort((a, b) => a.minRating - b.minRating);
 }
 function parsePvpRewards(table) {
   const col = columnIndex(table.headers);
@@ -310,7 +384,7 @@ function parsePvpRewards(table) {
   const goldI = col(["gold"]);
   const expI = col(["heroexp", "exp"]);
   const dustI = col(["astraldust", "dust"]);
-  const chestI = col(["pvpchest", "chest"]);
+  const chestI = optionalColumn(table.headers, ["pvpchest", "chest"]);
   const rows = table.rows.map((row) => {
     const resultRaw = (row[resultI] ?? "").toLowerCase();
     const result = resultRaw.startsWith("w") || resultRaw === "\u043F\u043E\u0431\u0435\u0434\u0430" ? "Win" : "Loss";
@@ -320,7 +394,7 @@ function parsePvpRewards(table) {
       gold: parseNumber(row[goldI]),
       exp: parseNumber(row[expI]),
       dust: parseNumber(row[dustI]),
-      opensChest: parseBool(row[chestI])
+      opensChest: chestI >= 0 ? parseBool(row[chestI]) : result === "Win"
     };
   }).filter((row) => row.leagueId !== "");
   if (rows.length === 0) {
@@ -328,101 +402,149 @@ function parsePvpRewards(table) {
   }
   return rows;
 }
-function parseAds(table) {
-  const drops = [];
-  const leagueMultiplier = /* @__PURE__ */ new Map();
-  const header = table.matrix[0] ?? [];
+function parseChests(fixedTable, randomTable) {
+  const fixed = parseChestRewardTable(fixedTable, true);
+  const random = parseChestRewardTable(randomTable, false);
+  if (fixed.length === 0 && random.length === 0) {
+    throw new Error("ChestT3: \u043D\u0435\u0442 \u043D\u0430\u0433\u0440\u0430\u0434");
+  }
+  return { fixed, random };
+}
+function parseChestRewardTable(table, guaranteed) {
+  const header = table.matrix[0] ?? table.headers;
   const col = columnIndex(header);
   const keyI = optionalColumn(header, ["key"]);
+  if (keyI < 0) {
+    throw new Error("ChestT3: \u043D\u0435\u0442 \u043A\u043E\u043B\u043E\u043D\u043A\u0438 Key");
+  }
   const pI = optionalColumn(header, ["probability", "chance"]);
-  const typeI = optionalColumn(header, ["itemtype"]);
-  const minI = optionalColumn(header, ["baseminamount", "minamount"]);
-  const maxI = optionalColumn(header, ["basemaxamount", "maxamount"]);
-  const affectedI = optionalColumn(header, ["isaffectedbyleague"]);
-  const leagueI = optionalColumn(header, ["leagueid"]);
-  const multI = optionalColumn(header, ["admultiplier"]);
+  const rarityIndex = {};
+  for (const rarity of RARITY_COLUMNS) {
+    const index = optionalColumn(header, [rarity.toLowerCase()]);
+    if (index >= 0) {
+      rarityIndex[rarity] = index;
+    }
+  }
+  const rows = [];
   for (const row of table.matrix.slice(1)) {
-    const key = keyI >= 0 ? (row[keyI] ?? "").trim() : "";
-    const itemType = typeI >= 0 ? (row[typeI] ?? "").trim() : "";
-    if (key !== "" && itemType !== "" && pI >= 0) {
-      drops.push({
-        key,
-        probability: parseNumber(row[pI]),
-        itemType,
-        minAmount: minI >= 0 ? parseNumber(row[minI]) : 0,
-        maxAmount: maxI >= 0 ? parseNumber(row[maxI]) : 0,
-        affectedByLeague: affectedI >= 0 ? parseBool(row[affectedI]) : false
-      });
+    const key = (row[keyI] ?? "").trim();
+    if (!key || /^key$/i.test(key)) {
+      continue;
     }
-    const leagueId = leagueI >= 0 ? (row[leagueI] ?? "").trim() : "";
-    if (leagueId.toLowerCase().startsWith("league") && multI >= 0) {
-      leagueMultiplier.set(leagueId, parseNumber(row[multI], 1));
+    const probability = guaranteed ? 1 : pI >= 0 ? parseNumber(row[pI]) : 0;
+    if (!guaranteed && probability <= 0) {
+      continue;
     }
+    const amountsByRarity = {};
+    for (const [rarity, index] of Object.entries(rarityIndex)) {
+      amountsByRarity[rarity] = parseNumber(row[index]);
+    }
+    rows.push({
+      key,
+      itemType: key,
+      probability,
+      amountsByRarity
+    });
   }
-  if (drops.length === 0) {
-    throw new Error("PvpAdRewardPool: \u043D\u0435\u0442 \u0434\u0440\u043E\u043F\u043E\u0432");
-  }
-  return { drops, leagueMultiplier };
+  return rows;
 }
-function parseChest(table) {
-  const drops = [];
-  const dropCounts = [];
-  const leagueMultiplier = /* @__PURE__ */ new Map();
-  let mode = "drops";
-  for (const row of table.matrix) {
-    const first = (row[0] ?? "").trim();
-    const second = (row[1] ?? "").trim();
-    if (first === "" && second === "") {
-      continue;
-    }
-    if (/^key$/i.test(first)) {
-      mode = "drops";
-      continue;
-    }
-    if (/^dropcount$/i.test(first)) {
-      mode = "dropCount";
-      continue;
-    }
-    if (/^leagueid$/i.test(first)) {
-      mode = "league";
-      continue;
-    }
-    if (mode === "drops") {
-      drops.push({
-        key: first,
-        probability: parseNumber(row[1]),
-        itemType: first,
-        minAmount: parseNumber(row[2]),
-        maxAmount: parseNumber(row[3]),
-        affectedByLeague: parseBool(row[4])
+function parseDailyIncome(table) {
+  const unscaled = emptyResources();
+  const scaled = emptyResources();
+  let unscaledEnergy = 0;
+  let scaledEnergy = 0;
+  const header = table.matrix[0] ?? [];
+  const looksLikeSplit = normalizeHeader(header[0] ?? "").includes("notaffected") || normalizeHeader(header[0] ?? "").includes("\u043D\u0435\u0437\u0430\u0432\u0438\u0441");
+  if (looksLikeSplit) {
+    for (const row of table.matrix.slice(1)) {
+      addNamedAmount(row[0], row[1], unscaled, (energy) => {
+        unscaledEnergy += energy;
       });
-      continue;
-    }
-    if (mode === "dropCount") {
-      dropCounts.push({
-        count: parseNumber(first),
-        probability: parseNumber(row[1])
+      addNamedAmount(row[2], row[3], scaled, (energy) => {
+        scaledEnergy += energy;
       });
-      continue;
     }
-    leagueMultiplier.set(first, parseNumber(row[1], 1));
+  } else {
+    const col = columnIndex(header.length > 0 ? header : table.headers);
+    const keyI = optionalColumn(header, ["key", "item", "resource"]);
+    const valueI = optionalColumn(header, ["value", "amount"]);
+    const affectedI = optionalColumn(header, ["isaffectedbyleague", "affectedbyleague"]);
+    for (const row of table.matrix.slice(1)) {
+      const name = keyI >= 0 ? row[keyI] : row[0];
+      const value = valueI >= 0 ? row[valueI] : row[1];
+      const affected = affectedI >= 0 && parseBool(row[affectedI]);
+      addNamedAmount(name, value, affected ? scaled : unscaled, (energy) => {
+        if (affected) {
+          scaledEnergy += energy;
+        } else {
+          unscaledEnergy += energy;
+        }
+      });
+    }
   }
-  if (drops.length === 0) {
-    throw new Error("PvpChestRewardPool: \u043D\u0435\u0442 \u0434\u0440\u043E\u043F\u043E\u0432");
-  }
-  if (dropCounts.length === 0) {
-    dropCounts.push({ count: 1, probability: 1 });
-  }
-  return { drops, dropCounts, leagueMultiplier };
+  return { unscaled, scaled, unscaledEnergy, scaledEnergy };
 }
-function describeChestParse(chest) {
-  const expectedItems = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
+function addNamedAmount(name, raw, into, onEnergy) {
+  const key = (name ?? "").trim();
+  if (!key) {
+    return;
+  }
+  const amount = parseNumber(raw);
+  if (amount === 0) {
+    return;
+  }
+  const kind = normalizeItemType(key);
+  if (kind === "gold") {
+    into.gold += amount;
+  } else if (kind === "exp") {
+    into.exp += amount;
+  } else if (kind === "dust") {
+    into.dust += amount;
+  } else if (kind === "essence") {
+    into.essence += amount;
+  } else if (kind === "energy") {
+    onEnergy(amount);
+  }
+}
+function describeChestParse(chests) {
+  const energy = chests.random.find((row) => normalizeItemType(row.itemType) === "energy");
+  const energyP = energy?.probability;
   return [
-    `${chest.drops.length} \u0434\u0440\u043E\u043F\u043E\u0432`,
-    `${chest.dropCounts.length} DropCount`,
-    `${chest.leagueMultiplier.size} \u043B\u0438\u0433`,
-    `EV \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u043E\u0432 ${expectedItems.toFixed(2)}`
+    `${chests.fixed.length} \u0444\u0438\u043A\u0441.`,
+    `${chests.random.length} RND`,
+    energyP !== void 0 ? `\u044D\u043D\u0435\u0440\u0433\u0438\u044F p=${energyP}` : "\u0431\u0435\u0437 \u044D\u043D\u0435\u0440\u0433\u0438\u0438"
   ].join(" \xB7 ");
+}
+function describeDailyIncome(income) {
+  return `\u0431\u0435\u0437 \u043B\u0438\u0433\u0438: \u0437\u043E\u043B\u043E\u0442\u043E ${income.unscaled.gold}, \u043E\u043F\u044B\u0442 ${income.unscaled.exp} \xB7 \u0441 \u043B\u0438\u0433\u043E\u0439: \u0437\u043E\u043B\u043E\u0442\u043E ${income.scaled.gold}, \u043E\u043F\u044B\u0442 ${income.scaled.exp}`;
+}
+function normalizeItemType(itemType) {
+  const raw = itemType.trim().toLowerCase();
+  if (raw === "gold" || raw.includes("gold")) {
+    return "gold";
+  }
+  if (raw === "heroexp" || raw === "exp" || raw.includes("exp")) {
+    return "exp";
+  }
+  if (raw === "astraldust" || raw === "dust" || raw.includes("dust")) {
+    return "dust";
+  }
+  if (raw.includes("essence")) {
+    return "essence";
+  }
+  if (raw === "energy") {
+    return "energy";
+  }
+  if (raw === "pvp" || raw === "attack") {
+    return "pvp";
+  }
+  if (raw === "chest") {
+    return "chest";
+  }
+  if (raw === "pve" || raw === "raid") {
+    return "pve";
+  }
+  return raw;
 }
 function columnIndex(headers) {
   const normalized = headers.map(normalizeHeader);
@@ -508,87 +630,28 @@ function dustCostForTierUp(row, ev, heroCount) {
   return heroCount * (row.shards * ev.dustPerNamedShard + row.arms * ev.dustPerFactionEmblem);
 }
 
-// src/sim/types.ts
-function emptyResources() {
-  return { gold: 0, exp: 0, essence: 0, dust: 0 };
-}
-function addResources(a, b) {
-  return {
-    gold: a.gold + b.gold,
-    exp: a.exp + b.exp,
-    essence: a.essence + b.essence,
-    dust: a.dust + b.dust
-  };
-}
-function scaleResources(a, factor) {
-  return {
-    gold: a.gold * factor,
-    exp: a.exp * factor,
-    essence: a.essence * factor,
-    dust: a.dust * factor
-  };
-}
-function canAfford(have, need) {
-  return have.gold + 1e-9 >= need.gold && have.exp + 1e-9 >= need.exp && have.essence + 1e-9 >= need.essence && have.dust + 1e-9 >= need.dust;
-}
-function subtractResources(have, need) {
-  return {
-    gold: have.gold - need.gold,
-    exp: have.exp - need.exp,
-    essence: have.essence - need.essence,
-    dust: have.dust - need.dust
-  };
-}
-var RESOURCE_IDS = ["gold", "exp", "essence", "dust"];
-var RESOURCE_LABELS = {
-  gold: "\u0417\u043E\u043B\u043E\u0442\u043E",
-  exp: "\u041E\u043F\u044B\u0442",
-  essence: "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F",
-  dust: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u044B\u043B\u044C"
-};
-var DEFAULT_SIM_PARAMS = {
-  heroCount: 5,
-  energyPerDay: 432,
-  adsPerDay: 5,
-  winRate: 0.9,
-  dustPerPull: 10,
-  sHeroCount: 8,
-  factionCount: 4,
-  gachaPity: 80,
-  maxDays: 1e4,
-  checkpoints: checkpointsEvery(20, 240),
-  leagueUnlockLevels: [1, 40, 60, 80, 100, 120, 140]
-};
-function checkpointsEvery(step, maxLevel) {
-  const levels = [];
-  for (let level = step; level <= maxLevel; level += step) {
-    levels.push(level);
-  }
-  return levels;
-}
-
 // src/sim/income.ts
-function energyReturnChance(slotDrops) {
-  let chance = 0;
+function energyPerSpinFromSlots(slotDrops) {
+  let energy = 0;
   for (const drop of slotDrops) {
     if (normalizeItemType(drop.itemType) === "energy") {
-      chance += drop.probability * drop.value;
+      energy += drop.probability * drop.value;
     }
   }
-  return chance;
-}
-function dailySpins(energyPerDay, slotDrops) {
-  const returned = energyReturnChance(slotDrops);
-  const denom = 1 - returned;
-  if (denom <= 1e-9) {
-    return energyPerDay;
-  }
-  return energyPerDay / denom;
+  return energy;
 }
 function computeDailyIncome(config, league, params) {
-  const spins = dailySpins(params.energyPerDay, config.slotDrops);
-  const fromSlots = slotIncome(config.slotDrops, spins, league);
+  const cost = Math.max(1e-9, params.spinEnergyCost);
+  const slotEnergyPerSpin = energyPerSpinFromSlots(config.slotDrops);
   const pvpChance = pvpHitChance(config.slotDrops);
+  const chestEnergyEach = expectedChestEnergy(config.chests, league);
+  const dailyEnergy = config.dailyIncome.unscaledEnergy + config.dailyIncome.scaledEnergy * league.goldIncomeMultiplier + params.otherDaily.energy;
+  const energyPerWinChest = chestEnergyEach;
+  const energyReturnPerSpin = slotEnergyPerSpin + pvpChance * params.winRate * energyPerWinChest;
+  const denom = cost - energyReturnPerSpin;
+  const constantEnergy = params.energyPerDay + dailyEnergy;
+  const spins = denom > 1e-9 ? constantEnergy / denom : constantEnergy / cost;
+  const fromSlots = slotIncome(config.slotDrops, spins, league);
   const pvpFights = spins * pvpChance;
   const pvpWins = pvpFights * params.winRate;
   const pvpLosses = pvpFights * (1 - params.winRate);
@@ -598,15 +661,26 @@ function computeDailyIncome(config, league, params) {
     pvpMatchReward(config, league, "Loss"),
     pvpLosses
   );
-  const slotChests = spins * chestHitChance(config.slotDrops);
-  const pvpChests = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
-  const chestsOpened = slotChests + pvpChests;
-  const fromChests = scaleRes(expectedChestResources(config.chest, league), chestsOpened);
-  const fromAds = scaleRes(expectedAdResources(config.ads, league), params.adsPerDay);
-  const total = sumRes(fromSlots, fromPvp, fromChests, fromAds);
+  const chestsOpened = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
+  const fromChests = scaleResources(expectedChestResources(config.chests, league), chestsOpened);
+  const fromDaily = addResources(
+    config.dailyIncome.unscaled,
+    scaleLeagueResources(config.dailyIncome.scaled, league)
+  );
+  const fromOther = {
+    gold: params.otherDaily.gold,
+    exp: params.otherDaily.exp,
+    essence: params.otherDaily.essence,
+    dust: params.otherDaily.dust
+  };
+  const total = sumRes(fromSlots, fromPvp, fromChests, fromDaily, fromOther);
   return {
     spins,
-    energyReturnChance: energyReturnChance(config.slotDrops),
+    regenEnergy: params.energyPerDay,
+    chestEnergy: chestsOpened * chestEnergyEach,
+    slotEnergy: spins * slotEnergyPerSpin,
+    dailyEnergy,
+    energyReturnPerSpin,
     pvpFights,
     pvpWins,
     pvpLosses,
@@ -614,7 +688,8 @@ function computeDailyIncome(config, league, params) {
     fromSlots,
     fromPvp,
     fromChests,
-    fromAds,
+    fromDaily,
+    fromOther,
     total
   };
 }
@@ -622,7 +697,7 @@ function slotIncome(drops, spins, league) {
   const out = emptyResources();
   for (const drop of drops) {
     const amount = spins * drop.probability * drop.value;
-    addItem(out, drop.itemType, amount, drop.affectedByLeague, league, "goldExp");
+    addCoreItem(out, drop.itemType, amount, league, true);
   }
   return out;
 }
@@ -630,15 +705,6 @@ function pvpHitChance(drops) {
   let chance = 0;
   for (const drop of drops) {
     if (normalizeItemType(drop.itemType) === "pvp") {
-      chance += drop.probability * Math.max(drop.value, 1);
-    }
-  }
-  return chance;
-}
-function chestHitChance(drops) {
-  let chance = 0;
-  for (const drop of drops) {
-    if (normalizeItemType(drop.itemType) === "chest") {
       chance += drop.probability * Math.max(drop.value, 1);
     }
   }
@@ -663,90 +729,67 @@ function pvpOpensChest(config, league) {
   const fallback = config.pvpRewards.find((row) => row.result === "Win");
   return (exact ?? fallback)?.opensChest ?? true;
 }
-function expectedChestResources(chest, league) {
-  const expectedCount = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
-  const leagueMult = chest.leagueMultiplier.get(league.id) ?? 1;
-  const perDrop = emptyResources();
-  const weightSum = chest.drops.reduce((sum, drop) => sum + drop.probability, 0);
-  for (const drop of chest.drops) {
-    const p = weightSum > 0 ? drop.probability / weightSum : 0;
-    const avg = (drop.minAmount + drop.maxAmount) / 2;
-    const amount = p * avg;
-    addItem(perDrop, drop.itemType, amount, drop.affectedByLeague, league, "chest", leagueMult);
+function amountAtRarity(row, rarity) {
+  const exact = row.amountsByRarity[rarity];
+  if (exact !== void 0) {
+    return exact;
   }
-  return scaleRes(perDrop, expectedCount);
+  const common = row.amountsByRarity.Common;
+  if (common !== void 0) {
+    return common;
+  }
+  const values = Object.values(row.amountsByRarity);
+  return values.length > 0 ? values[0] : 0;
 }
-function expectedAdResources(ads, league) {
-  const leagueMult = ads.leagueMultiplier.get(league.id) ?? 1;
+function expectedChestResources(chests, league) {
+  const rarity = league.slotMachineRarity || "Common";
   const out = emptyResources();
-  const weightSum = ads.drops.reduce((sum, drop) => sum + drop.probability, 0);
-  for (const drop of ads.drops) {
-    const p = weightSum > 0 ? drop.probability / weightSum : drop.probability;
-    const avg = (drop.minAmount + drop.maxAmount) / 2;
-    addItem(out, drop.itemType, p * avg, drop.affectedByLeague, league, "ad", leagueMult);
+  for (const row of chests.fixed) {
+    addCoreItem(out, row.itemType, amountAtRarity(row, rarity), league, false);
+  }
+  const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
+  for (const row of chests.random) {
+    const p = weightSum > 0 ? row.probability / weightSum : row.probability;
+    addCoreItem(out, row.itemType, p * amountAtRarity(row, rarity), league, false);
   }
   return out;
 }
-function addItem(out, itemType, amount, affectedByLeague, league, source, extraLeagueMult = 1) {
-  const kind = normalizeItemType(itemType);
-  let goldMult = 1;
-  let expMult = 1;
-  if (affectedByLeague) {
-    if (source === "ad") {
-      goldMult = extraLeagueMult;
-      expMult = extraLeagueMult;
-    } else if (source === "chest") {
-      goldMult = extraLeagueMult;
-      expMult = extraLeagueMult;
-    } else {
-      goldMult = league.goldIncomeMultiplier;
-      expMult = league.expIncomeMultiplier;
+function expectedChestEnergy(chests, league) {
+  const rarity = league.slotMachineRarity || "Common";
+  let energy = 0;
+  for (const row of chests.fixed) {
+    if (normalizeItemType(row.itemType) === "energy") {
+      energy += amountAtRarity(row, rarity);
     }
   }
+  const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
+  for (const row of chests.random) {
+    if (normalizeItemType(row.itemType) !== "energy") {
+      continue;
+    }
+    const p = weightSum > 0 ? row.probability / weightSum : row.probability;
+    energy += p * amountAtRarity(row, rarity);
+  }
+  return energy;
+}
+function addCoreItem(out, itemType, amount, league, applySlotLeagueMult) {
+  const kind = normalizeItemType(itemType);
   if (kind === "gold") {
-    out.gold += amount * goldMult;
+    out.gold += applySlotLeagueMult ? amount * league.goldIncomeMultiplier : amount;
   } else if (kind === "exp") {
-    out.exp += amount * expMult;
+    out.exp += applySlotLeagueMult ? amount * league.expIncomeMultiplier : amount;
   } else if (kind === "dust") {
     out.dust += amount;
   } else if (kind === "essence") {
     out.essence += amount;
   }
 }
-function normalizeItemType(itemType) {
-  const raw = itemType.trim().toLowerCase();
-  if (raw === "gold" || raw.includes("gold")) {
-    return "gold";
-  }
-  if (raw === "heroexp" || raw === "exp" || raw.includes("exp")) {
-    return "exp";
-  }
-  if (raw === "astraldust" || raw === "dust" || raw.includes("dust")) {
-    return "dust";
-  }
-  if (raw.includes("essence")) {
-    return "essence";
-  }
-  if (raw === "energy") {
-    return "energy";
-  }
-  if (raw === "pvp" || raw === "attack") {
-    return "pvp";
-  }
-  if (raw === "chest") {
-    return "chest";
-  }
-  if (raw === "pve" || raw === "raid") {
-    return "pve";
-  }
-  return raw;
-}
-function scaleRes(res, factor) {
+function scaleLeagueResources(res, league) {
   return {
-    gold: res.gold * factor,
-    exp: res.exp * factor,
-    essence: res.essence * factor,
-    dust: res.dust * factor
+    gold: res.gold * league.goldIncomeMultiplier,
+    exp: res.exp * league.expIncomeMultiplier,
+    essence: res.essence,
+    dust: res.dust
   };
 }
 function sumRes(...parts) {
@@ -781,11 +824,13 @@ function runSimulation(config, params) {
   }));
   let day = 0;
   let squadLevel = 1;
-  let leagueIndex = 0;
+  let leagueIndex = clampLeagueIndex(params.startLeagueIndex, config.leagues.length);
   let pendingLeagueIndex = null;
+  let rating = Math.max(0, params.startRating);
   let inventory = emptyResources();
   const checkpointDays = /* @__PURE__ */ new Map();
   const stallAcc = /* @__PURE__ */ new Map();
+  const daysInLeague = config.leagues.map(() => 0);
   for (const cp of params.checkpoints) {
     if (squadLevel >= cp) {
       checkpointDays.set(cp, 0);
@@ -797,54 +842,27 @@ function runSimulation(config, params) {
       leagueIndex = pendingLeagueIndex;
       pendingLeagueIndex = null;
     }
-    const league2 = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
-    const income = computeDailyIncome(config, league2, params);
+    daysInLeague[leagueIndex] = (daysInLeague[leagueIndex] ?? 0) + 1;
+    const income = incomeByLeague[Math.min(leagueIndex, incomeByLeague.length - 1)]?.income ?? computeDailyIncome(config, config.leagues[leagueIndex], params);
     inventory = addResources(inventory, income.total);
-    let progressed = true;
-    while (progressed) {
-      progressed = false;
-      const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
-      if (unpaid) {
-        const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
-        const need2 = { ...emptyResources(), dust: dustNeed };
-        if (canAfford(inventory, need2)) {
-          inventory = subtractResources(inventory, need2);
-          unpaid.paid = true;
-          progressed = true;
-          continue;
+    const league2 = config.leagues[leagueIndex];
+    rating = Math.max(0, rating + income.pvpWins * (league2?.winRating ?? 0) + income.pvpLosses * (league2?.lossRating ?? 0));
+    spendDay(pendingTiers, byLevel, inventory, income.total, params, gacha, squadLevel, stallAcc, (next) => {
+      squadLevel = next;
+      for (const cp of params.checkpoints) {
+        if (squadLevel >= cp && !checkpointDays.has(cp)) {
+          checkpointDays.set(cp, day);
         }
-        const nextRow = byLevel.get(squadLevel + 1);
-        const surplusNeed = nextRow ? addResources(need2, scaleResources(levelCost(nextRow), params.heroCount)) : need2;
-        recordStall(stallAcc, squadLevel, "dust", inventory, surplusNeed, income.total);
-        break;
       }
-      const nextLevel = squadLevel + 1;
-      const row = byLevel.get(nextLevel);
-      if (!row) {
-        if (squadLevel < maxLevel) {
-          throw new Error(`LevelProgression: \u043D\u0435\u0442 \u0443\u0440\u043E\u0432\u043D\u044F ${nextLevel}`);
-        }
-        break;
-      }
-      const need = scaleResources(levelCost(row), params.heroCount);
-      if (canAfford(inventory, need)) {
-        inventory = subtractResources(inventory, need);
-        squadLevel = nextLevel;
-        progressed = true;
-        for (const cp of params.checkpoints) {
-          if (squadLevel >= cp && !checkpointDays.has(cp)) {
-            checkpointDays.set(cp, day);
-          }
-        }
-        const unlocked = leagueIndexForLevel(params.leagueUnlockLevels, squadLevel);
-        if (unlocked > leagueIndex && unlocked !== pendingLeagueIndex) {
-          pendingLeagueIndex = unlocked;
-        }
-        continue;
-      }
-      const limiting = limitingResource(inventory, need, income.total);
-      recordStall(stallAcc, squadLevel, limiting, inventory, need, income.total);
-      break;
+    });
+    let nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
+    if (params.weeklyResetEveryDays > 0 && day % params.weeklyResetEveryDays === 0) {
+      nextLeagueIndex = Math.max(0, leagueIndex - 1);
+      const resetLeague = config.leagues[nextLeagueIndex];
+      rating = Math.max(0, (resetLeague?.minRating ?? 0) + params.weeklyResetRatingBonus);
+    }
+    if (nextLeagueIndex !== leagueIndex) {
+      pendingLeagueIndex = nextLeagueIndex;
     }
   }
   if (squadLevel >= maxLevel) {
@@ -865,6 +883,7 @@ function runSimulation(config, params) {
     finalLevel: squadLevel,
     maxLevel,
     finalLeagueName: league?.name || league?.id || "\u2014",
+    finalRating: rating,
     inventory,
     checkpoints: params.checkpoints.map((level) => ({
       level,
@@ -874,14 +893,88 @@ function runSimulation(config, params) {
     bottleneck: describeBottleneck(stalls, maxLevel),
     gacha,
     incomeByLeague,
+    daysInLeagues: config.leagues.map((row, index) => ({
+      leagueName: row.name || row.id,
+      days: daysInLeague[index] ?? 0
+    })),
     notes
   };
+}
+function spendDay(pendingTiers, byLevel, inventoryRef, daily, params, gacha, squadLevelStart, stallAcc, onLevel) {
+  let inventory = inventoryRef;
+  let squadLevel = squadLevelStart;
+  const maxLevel = [...byLevel.keys()].reduce((max, level) => Math.max(max, level), 1);
+  let progressed = true;
+  while (progressed) {
+    progressed = false;
+    const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
+    if (unpaid) {
+      const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
+      const need2 = { ...emptyResources(), dust: dustNeed };
+      if (canAfford(inventory, need2)) {
+        const next = subtractResources(inventory, need2);
+        copyRes(inventory, next);
+        unpaid.paid = true;
+        progressed = true;
+        continue;
+      }
+      const nextRow = byLevel.get(squadLevel + 1);
+      const surplusNeed = nextRow ? addResources(need2, scaleResources(levelCost(nextRow), params.heroCount)) : need2;
+      recordStall(stallAcc, squadLevel, "dust", inventory, surplusNeed);
+      break;
+    }
+    const nextLevel = squadLevel + 1;
+    const row = byLevel.get(nextLevel);
+    if (!row) {
+      if (squadLevel < maxLevel) {
+        throw new Error(`LevelProgression: \u043D\u0435\u0442 \u0443\u0440\u043E\u0432\u043D\u044F ${nextLevel}`);
+      }
+      break;
+    }
+    const need = scaleResources(levelCost(row), params.heroCount);
+    if (canAfford(inventory, need)) {
+      const next = subtractResources(inventory, need);
+      copyRes(inventory, next);
+      squadLevel = nextLevel;
+      onLevel(squadLevel);
+      progressed = true;
+      continue;
+    }
+    const limiting = limitingResource(inventory, need, daily);
+    recordStall(stallAcc, squadLevel, limiting, inventory, need);
+    break;
+  }
+}
+function copyRes(target, source) {
+  target.gold = source.gold;
+  target.exp = source.exp;
+  target.essence = source.essence;
+  target.dust = source.dust;
+}
+function leagueIndexForRating(leagues, rating) {
+  let best = 0;
+  for (let i = 0; i < leagues.length; i++) {
+    const league = leagues[i];
+    if (rating + 1e-9 >= league.minRating) {
+      best = i;
+      if (league.maxRating > 0 && rating <= league.maxRating) {
+        break;
+      }
+    }
+  }
+  return best;
+}
+function clampLeagueIndex(index, count) {
+  if (count <= 0) {
+    return 0;
+  }
+  return Math.min(count - 1, Math.max(0, Math.floor(index)));
 }
 function levelCost(row) {
   return {
     gold: row.goldCost,
-    exp: row.expCost,
-    essence: row.essenceCost,
+    exp: row.isBreakthrough ? 0 : row.expCost,
+    essence: row.isBreakthrough ? row.essenceCost : 0,
     dust: 0
   };
 }
@@ -905,15 +998,6 @@ function assignTierUps(config) {
   }
   return pending;
 }
-function leagueIndexForLevel(unlocks, squadLevel) {
-  let index = 0;
-  for (let i = 0; i < unlocks.length; i++) {
-    if (squadLevel >= unlocks[i]) {
-      index = i;
-    }
-  }
-  return index;
-}
 function limitingResource(have, need, daily) {
   let worst = "gold";
   let worstDays = -1;
@@ -931,7 +1015,7 @@ function limitingResource(have, need, daily) {
   }
   return worst;
 }
-function recordStall(acc, squadLevel, limiting, have, need, _daily) {
+function recordStall(acc, squadLevel, limiting, have, need) {
   const key = `${squadLevel}:${limiting}`;
   const surplus = {};
   for (const id of RESOURCE_IDS) {
@@ -987,6 +1071,7 @@ function simulationReportCsv(result) {
   lines.push(`meta,finalLevel,${result.finalLevel}`);
   lines.push(`meta,maxLevel,${result.maxLevel}`);
   lines.push(`meta,finalLeague,${csvCell(result.finalLeagueName)}`);
+  lines.push(`meta,finalRating,${result.finalRating}`);
   for (const cp of result.checkpoints) {
     lines.push(`checkpoint,${cp.level},${cp.day ?? ""}`);
   }
@@ -994,11 +1079,15 @@ function simulationReportCsv(result) {
   for (const stall of result.stalls) {
     lines.push(`stall,${stall.squadLevel}:${stall.limiting},${stall.days}`);
   }
+  for (const row of result.daysInLeagues) {
+    lines.push(`leagueDays,${csvCell(row.leagueName)},${row.days}`);
+  }
   lines.push(`gacha,dustPerNamedShard,${result.gacha.dustPerNamedShard}`);
   lines.push(`gacha,dustPerFactionEmblem,${result.gacha.dustPerFactionEmblem}`);
   lines.push(`gacha,dustPerSquadFullAscension,${result.gacha.dustPerSquadFullAscension}`);
   for (const row of result.incomeByLeague) {
     const t = row.income.total;
+    lines.push(`income,${csvCell(row.leagueName)} spins,${row.income.spins}`);
     lines.push(`income,${csvCell(row.leagueName)} gold,${t.gold}`);
     lines.push(`income,${csvCell(row.leagueName)} exp,${t.exp}`);
     lines.push(`income,${csvCell(row.leagueName)} essence,${t.essence}`);
@@ -1070,11 +1159,11 @@ var ConfigTablesApp = class {
       "box-sizing: border-box"
     ].join(";");
     const title = document.createElement("h2");
-    title.textContent = "HoC Balance \u2014 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u044F (\u0430\u043B\u044C\u0444\u0430)";
+    title.textContent = "HoC Balance \u2014 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u044F (\u0430\u043B\u044C\u0444\u0430) V2";
     title.style.cssText = "margin: 0 0 8px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
     const intro = document.createElement("p");
-    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F: \u0441\u043B\u043E\u0442\u044B + \u0430\u0440\u0435\u043D\u0430 + 5 \u0440\u0435\u043A\u043B\u0430\u043C. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E. \u0412\u043D\u0435\u0448\u043D\u0438\u0435 \u0438\u0432\u0435\u043D\u0442\u044B \u043D\u0435 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F.";
+    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F: \u0441\u043B\u043E\u0442\u044B + \u0430\u0440\u0435\u043D\u0430 + DailyIncome. \u041B\u0438\u0433\u0438 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443 \u0441 \u0435\u0436\u0435\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u043C \u0441\u0431\u0440\u043E\u0441\u043E\u043C. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E.";
     intro.style.cssText = "margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;";
     root.appendChild(intro);
     root.appendChild(this.createTablesSection());
@@ -1123,25 +1212,42 @@ var ConfigTablesApp = class {
     const p = DEFAULT_SIM_PARAMS;
     grid.append(
       this.paramField("heroCount", "\u0413\u0435\u0440\u043E\u0438 \u0432 \u043E\u0442\u0440\u044F\u0434\u0435", p.heroCount, 1),
-      this.paramField("energyPerDay", "\u042D\u043D\u0435\u0440\u0433\u0438\u044F / \u0441\u0443\u0442\u043A\u0438", p.energyPerDay, 1),
-      this.paramField("adsPerDay", "\u0420\u0435\u043A\u043B\u0430\u043C\u0430 / \u0441\u0443\u0442\u043A\u0438", p.adsPerDay, 1),
+      this.paramField("energyPerDay", "\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438 / \u0441\u0443\u0442\u043A\u0438", p.energyPerDay, 1),
+      this.paramField("spinEnergyCost", "\u042D\u043D\u0435\u0440\u0433\u0438\u0438 \u0437\u0430 \u0441\u043F\u0438\u043D", p.spinEnergyCost, 1),
       this.paramField("winRatePct", "\u0412\u0438\u043D\u0440\u0435\u0439\u0442 PvP %", p.winRate * 100, 1),
       this.paramField("dustPerPull", "\u041F\u044B\u043B\u044C \u0437\u0430 1 \u043A\u0440\u0443\u0442\u043A\u0443", p.dustPerPull, 1),
       this.paramField("sHeroCount", "\u0413\u0435\u0440\u043E\u0438 S \u0432 \u043F\u0443\u043B\u0435", p.sHeroCount, 1),
       this.paramField("factionCount", "\u0424\u0440\u0430\u043A\u0446\u0438\u0439 (\u0433\u0435\u0440\u0431\u044B)", p.factionCount, 1),
       this.paramField("gachaPity", "\u0413\u0430\u0440\u0430\u043D\u0442 S (\u043A\u0440\u0443\u0442\u043A\u0430)", p.gachaPity, 1),
+      this.paramField("startLeagueIndex", "\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u0430\u044F \u043B\u0438\u0433\u0430 (1 = \u0411\u0440\u043E\u043D\u0437\u0430)", p.startLeagueIndex + 1, 1),
+      this.paramField("startRating", "\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0439\u0442\u0438\u043D\u0433", p.startRating, 1),
+      this.paramField("weeklyResetEveryDays", "\u0421\u0431\u0440\u043E\u0441 \u043B\u0438\u0433\u0438 \u043A\u0430\u0436\u0434\u044B\u0435 N \u0434\u043D\u0435\u0439", p.weeklyResetEveryDays, 1),
+      this.paramField("weeklyResetRatingBonus", "\u0420\u0435\u0439\u0442\u0438\u043D\u0433 \u043F\u043E\u0441\u043B\u0435 \u0441\u0431\u0440\u043E\u0441\u0430: min +", p.weeklyResetRatingBonus, 1),
       this.paramField("maxDays", "\u041C\u0430\u043A\u0441. \u0434\u043D\u0435\u0439", p.maxDays, 1)
     );
     wrap.appendChild(grid);
     const extra = document.createElement("div");
     extra.style.cssText = "display: grid; gap: 10px; margin-top: 10px;";
     extra.append(
-      this.paramField("checkpoints", "\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442\u044B \u0443\u0440\u043E\u0432\u043D\u0435\u0439", p.checkpoints.join(", "), 0, true),
-      this.paramField("leagueUnlockLevels", "\u0423\u0440\u043E\u0432\u043D\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u044F \u043B\u0438\u0433", p.leagueUnlockLevels.join(", "), 0, true)
+      this.paramField("checkpoints", "\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442\u044B \u0443\u0440\u043E\u0432\u043D\u0435\u0439", p.checkpoints.join(", "), 0, true)
     );
     wrap.appendChild(extra);
+    const otherHeading = document.createElement("div");
+    otherHeading.textContent = "\u0420\u0443\u0447\u043D\u043E\u0439 Other Daily Income (\u043F\u043E\u0432\u0435\u0440\u0445 \u0442\u0430\u0431\u043B\u0438\u0446\u044B DailyIncome)";
+    otherHeading.style.cssText = "font-weight: 600; font-size: 13px; margin: 12px 0 8px; color: #d0d0d0;";
+    wrap.appendChild(otherHeading);
+    const other = document.createElement("div");
+    other.style.cssText = "display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;";
+    other.append(
+      this.paramField("otherGold", "\u0417\u043E\u043B\u043E\u0442\u043E / \u0434\u0435\u043D\u044C", p.otherDaily.gold, 1),
+      this.paramField("otherExp", "\u041E\u043F\u044B\u0442 / \u0434\u0435\u043D\u044C", p.otherDaily.exp, 1),
+      this.paramField("otherEssence", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F / \u0434\u0435\u043D\u044C", p.otherDaily.essence, 1),
+      this.paramField("otherDust", "\u041F\u044B\u043B\u044C / \u0434\u0435\u043D\u044C", p.otherDaily.dust, 1),
+      this.paramField("otherEnergy", "\u042D\u043D\u0435\u0440\u0433\u0438\u044F / \u0434\u0435\u043D\u044C", p.otherDaily.energy, 1)
+    );
+    wrap.appendChild(other);
     const hint = document.createElement("div");
-    hint.textContent = "\u041B\u0438\u0433\u0430 2 (\u0421\u0435\u0440\u0435\u0431\u0440\u043E) \u0441 \u0443\u0440\u043E\u0432\u043D\u044F 40 \u2014 \u043A\u0430\u043A \u0432 \u0422\u0417; \u0434\u0430\u043B\u044C\u0448\u0435 60 / 80 / 100 / 120 / 140. \u0412\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 (\u043E\u0441\u043A\u043E\u043B\u043A\u0438/\u0433\u0435\u0440\u0431\u044B) \u0441\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u0431\u0440\u0435\u0439\u043A\u043F\u043E\u0438\u043D\u0442\u043E\u0432 20/40/60/80.";
+    hint.textContent = "\u0420\u0435\u0433\u0435\u043D 288/\u0441\u0443\u0442\u043A\u0438. WR 55%. \u041B\u0438\u0433\u0430 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443; \u043C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u0438 \u043D\u043E\u0432\u043E\u0439 \u043B\u0438\u0433\u0438 \u0441\u043E \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0433\u043E \u0434\u043D\u044F. \u041A\u0430\u0436\u0434\u044B\u0435 7 \u0434\u043D\u0435\u0439 \u2014 \u043C\u0438\u043D\u0443\u0441 1 \u043B\u0438\u0433\u0430, \u0440\u0435\u0439\u0442\u0438\u043D\u0433 = \u043D\u0438\u0436\u043D\u044F\u044F \u0433\u0440\u0430\u043D\u0438\u0446\u0430 + 100. \u0421\u0443\u043D\u0434\u0443\u043A T3 \u0437\u0430 \u043A\u0430\u0436\u0434\u0443\u044E \u043F\u043E\u0431\u0435\u0434\u0443: \u0444\u0438\u043A\u0441. \u043D\u0430\u0433\u0440\u0430\u0434\u044B + \u043E\u0434\u0438\u043D RND.";
     hint.style.cssText = "margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;";
     wrap.appendChild(hint);
     return wrap;
@@ -1311,8 +1417,13 @@ var ConfigTablesApp = class {
     }
   }
   describeParsedTable(id, parsed) {
-    if (id === "PvpChestRewardPool") {
-      return describeChestParse(parseChest(parsed));
+    if (id === "ChestT3Rewards" || id === "ChestT3RND") {
+      const empty = { headers: ["Key"], rows: [], matrix: [["Key"]] };
+      const chests = id === "ChestT3Rewards" ? parseChests(parsed, empty) : parseChests(empty, parsed);
+      return describeChestParse(chests);
+    }
+    if (id === "DailyIncome") {
+      return describeDailyIncome(parseDailyIncome(parsed));
     }
     const headerPreview = parsed.headers.filter((header) => header !== "").join(", ");
     return `${parsed.rows.length} \u0441\u0442\u0440\u043E\u043A \xB7 ${headerPreview}`;
@@ -1348,7 +1459,7 @@ var ConfigTablesApp = class {
     return {
       heroCount: Math.max(1, Math.round(num("heroCount", d.heroCount))),
       energyPerDay: Math.max(0, num("energyPerDay", d.energyPerDay)),
-      adsPerDay: Math.max(0, num("adsPerDay", d.adsPerDay)),
+      spinEnergyCost: Math.max(1e-4, num("spinEnergyCost", d.spinEnergyCost)),
       winRate: Math.min(1, Math.max(0, num("winRatePct", d.winRate * 100) / 100)),
       dustPerPull: Math.max(0, num("dustPerPull", d.dustPerPull)),
       sHeroCount: Math.max(1, Math.round(num("sHeroCount", d.sHeroCount))),
@@ -1356,7 +1467,17 @@ var ConfigTablesApp = class {
       gachaPity: Math.max(1, Math.round(num("gachaPity", d.gachaPity))),
       maxDays: Math.max(1, Math.round(num("maxDays", d.maxDays))),
       checkpoints: list("checkpoints", d.checkpoints),
-      leagueUnlockLevels: list("leagueUnlockLevels", d.leagueUnlockLevels)
+      startLeagueIndex: Math.max(0, Math.round(num("startLeagueIndex", d.startLeagueIndex + 1)) - 1),
+      startRating: Math.max(0, num("startRating", d.startRating)),
+      weeklyResetEveryDays: Math.max(0, Math.round(num("weeklyResetEveryDays", d.weeklyResetEveryDays))),
+      weeklyResetRatingBonus: num("weeklyResetRatingBonus", d.weeklyResetRatingBonus),
+      otherDaily: {
+        gold: Math.max(0, num("otherGold", d.otherDaily.gold)),
+        exp: Math.max(0, num("otherExp", d.otherDaily.exp)),
+        essence: Math.max(0, num("otherEssence", d.otherDaily.essence)),
+        dust: Math.max(0, num("otherDust", d.otherDaily.dust)),
+        energy: Math.max(0, num("otherEnergy", d.otherDaily.energy))
+      }
     };
   }
   runSim() {
@@ -1387,7 +1508,7 @@ var ConfigTablesApp = class {
     heading.style.cssText = "margin: 0 0 10px; font-size: 16px;";
     this.resultsEl.appendChild(heading);
     this.resultsEl.appendChild(this.kvLine(
-      `\u0414\u043D\u0435\u0439: ${result.daysRun} \xB7 \u0423\u0440\u043E\u0432\u0435\u043D\u044C \u043E\u0442\u0440\u044F\u0434\u0430: ${result.finalLevel} / ${result.maxLevel} \xB7 \u041B\u0438\u0433\u0430: ${result.finalLeagueName}`
+      `\u0414\u043D\u0435\u0439: ${result.daysRun} \xB7 \u0423\u0440\u043E\u0432\u0435\u043D\u044C \u043E\u0442\u0440\u044F\u0434\u0430: ${result.finalLevel} / ${result.maxLevel} \xB7 \u041B\u0438\u0433\u0430: ${result.finalLeagueName} \xB7 \u0420\u0435\u0439\u0442\u0438\u043D\u0433: ${this.fmt(result.finalRating)}`
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442\u044B (\u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C)"));
     this.resultsEl.appendChild(this.simpleTable(
@@ -1424,16 +1545,22 @@ var ConfigTablesApp = class {
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0414\u043D\u0435\u0432\u043D\u043E\u0439 \u0434\u043E\u0445\u043E\u0434 \u043F\u043E \u043B\u0438\u0433\u0430\u043C"));
     this.resultsEl.appendChild(this.simpleTable(
-      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "PvP \u0431\u043E\u0451\u0432", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C"],
+      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "PvP \u0431\u043E\u0451\u0432", "\u0421\u0443\u043D\u0434\u0443\u043A\u0438", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C"],
       result.incomeByLeague.map((row) => [
         row.leagueName,
         this.fmt(row.income.spins),
         this.fmt(row.income.pvpFights),
+        this.fmt(row.income.chestsOpened),
         this.fmt(row.income.total.gold),
         this.fmt(row.income.total.exp),
         this.fmt(row.income.total.essence),
         this.fmt(row.income.total.dust)
       ])
+    ));
+    this.resultsEl.appendChild(this.sectionTitle("\u0414\u043D\u0435\u0439 \u0432 \u043B\u0438\u0433\u0430\u0445"));
+    this.resultsEl.appendChild(this.simpleTable(
+      ["\u041B\u0438\u0433\u0430", "\u0414\u043D\u0435\u0439"],
+      result.daysInLeagues.map((row) => [row.leagueName, String(row.days)])
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u041E\u0441\u0442\u0430\u0442\u043E\u043A \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u044F"));
     this.resultsEl.appendChild(this.kvLine(

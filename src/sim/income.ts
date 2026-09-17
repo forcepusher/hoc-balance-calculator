@@ -1,16 +1,22 @@
+import { normalizeItemType } from './parseGameConfig.js';
 import type {
-    AdConfig,
-    ChestConfig,
+    ChestRewardRow,
+    ChestTables,
     GameConfig,
     LeagueRow,
     Resources,
+    SimParams,
     SlotDrop,
 } from './types.js';
-import { emptyResources } from './types.js';
+import { addResources, emptyResources, scaleResources } from './types.js';
 
 export interface DailyIncomeBreakdown {
     spins: number;
-    energyReturnChance: number;
+    regenEnergy: number;
+    chestEnergy: number;
+    slotEnergy: number;
+    dailyEnergy: number;
+    energyReturnPerSpin: number;
     pvpFights: number;
     pvpWins: number;
     pvpLosses: number;
@@ -18,37 +24,40 @@ export interface DailyIncomeBreakdown {
     fromSlots: Resources;
     fromPvp: Resources;
     fromChests: Resources;
-    fromAds: Resources;
+    fromDaily: Resources;
+    fromOther: Resources;
     total: Resources;
 }
 
-export function energyReturnChance(slotDrops: SlotDrop[]): number {
-    let chance = 0;
+export function energyPerSpinFromSlots(slotDrops: SlotDrop[]): number {
+    let energy = 0;
     for (const drop of slotDrops) {
         if (normalizeItemType(drop.itemType) === 'energy') {
-            chance += drop.probability * drop.value;
+            energy += drop.probability * drop.value;
         }
     }
-    return chance;
-}
-
-export function dailySpins(energyPerDay: number, slotDrops: SlotDrop[]): number {
-    const returned = energyReturnChance(slotDrops);
-    const denom = 1 - returned;
-    if (denom <= 1e-9) {
-        return energyPerDay;
-    }
-    return energyPerDay / denom;
+    return energy;
 }
 
 export function computeDailyIncome(
     config: GameConfig,
     league: LeagueRow,
-    params: { energyPerDay: number; adsPerDay: number; winRate: number },
+    params: SimParams,
 ): DailyIncomeBreakdown {
-    const spins = dailySpins(params.energyPerDay, config.slotDrops);
-    const fromSlots = slotIncome(config.slotDrops, spins, league);
+    const cost = Math.max(1e-9, params.spinEnergyCost);
+    const slotEnergyPerSpin = energyPerSpinFromSlots(config.slotDrops);
     const pvpChance = pvpHitChance(config.slotDrops);
+    const chestEnergyEach = expectedChestEnergy(config.chests, league);
+    const dailyEnergy = config.dailyIncome.unscaledEnergy
+        + config.dailyIncome.scaledEnergy * league.goldIncomeMultiplier
+        + params.otherDaily.energy;
+    const energyPerWinChest = chestEnergyEach;
+    const energyReturnPerSpin = slotEnergyPerSpin + pvpChance * params.winRate * energyPerWinChest;
+    const denom = cost - energyReturnPerSpin;
+    const constantEnergy = params.energyPerDay + dailyEnergy;
+    const spins = denom > 1e-9 ? constantEnergy / denom : constantEnergy / cost;
+
+    const fromSlots = slotIncome(config.slotDrops, spins, league);
     const pvpFights = spins * pvpChance;
     const pvpWins = pvpFights * params.winRate;
     const pvpLosses = pvpFights * (1 - params.winRate);
@@ -59,16 +68,27 @@ export function computeDailyIncome(
         pvpLosses,
     );
 
-    const slotChests = spins * chestHitChance(config.slotDrops);
-    const pvpChests = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
-    const chestsOpened = slotChests + pvpChests;
-    const fromChests = scaleRes(expectedChestResources(config.chest, league), chestsOpened);
-    const fromAds = scaleRes(expectedAdResources(config.ads, league), params.adsPerDay);
+    const chestsOpened = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
+    const fromChests = scaleResources(expectedChestResources(config.chests, league), chestsOpened);
+    const fromDaily = addResources(
+        config.dailyIncome.unscaled,
+        scaleLeagueResources(config.dailyIncome.scaled, league),
+    );
+    const fromOther: Resources = {
+        gold: params.otherDaily.gold,
+        exp: params.otherDaily.exp,
+        essence: params.otherDaily.essence,
+        dust: params.otherDaily.dust,
+    };
 
-    const total = sumRes(fromSlots, fromPvp, fromChests, fromAds);
+    const total = sumRes(fromSlots, fromPvp, fromChests, fromDaily, fromOther);
     return {
         spins,
-        energyReturnChance: energyReturnChance(config.slotDrops),
+        regenEnergy: params.energyPerDay,
+        chestEnergy: chestsOpened * chestEnergyEach,
+        slotEnergy: spins * slotEnergyPerSpin,
+        dailyEnergy,
+        energyReturnPerSpin,
         pvpFights,
         pvpWins,
         pvpLosses,
@@ -76,7 +96,8 @@ export function computeDailyIncome(
         fromSlots,
         fromPvp,
         fromChests,
-        fromAds,
+        fromDaily,
+        fromOther,
         total,
     };
 }
@@ -85,7 +106,7 @@ function slotIncome(drops: SlotDrop[], spins: number, league: LeagueRow): Resour
     const out = emptyResources();
     for (const drop of drops) {
         const amount = spins * drop.probability * drop.value;
-        addItem(out, drop.itemType, amount, drop.affectedByLeague, league, 'goldExp');
+        addCoreItem(out, drop.itemType, amount, league, true);
     }
     return out;
 }
@@ -94,16 +115,6 @@ function pvpHitChance(drops: SlotDrop[]): number {
     let chance = 0;
     for (const drop of drops) {
         if (normalizeItemType(drop.itemType) === 'pvp') {
-            chance += drop.probability * Math.max(drop.value, 1);
-        }
-    }
-    return chance;
-}
-
-function chestHitChance(drops: SlotDrop[]): number {
-    let chance = 0;
-    for (const drop of drops) {
-        if (normalizeItemType(drop.itemType) === 'chest') {
             chance += drop.probability * Math.max(drop.value, 1);
         }
     }
@@ -131,107 +142,77 @@ function pvpOpensChest(config: GameConfig, league: LeagueRow): boolean {
     return (exact ?? fallback)?.opensChest ?? true;
 }
 
-function expectedChestResources(chest: ChestConfig, league: LeagueRow): Resources {
-    const expectedCount = chest.dropCounts.reduce((sum, row) => sum + row.count * row.probability, 0);
-    const leagueMult = chest.leagueMultiplier.get(league.id) ?? 1;
-    const perDrop = emptyResources();
-    const weightSum = chest.drops.reduce((sum, drop) => sum + drop.probability, 0);
-    for (const drop of chest.drops) {
-        const p = weightSum > 0 ? drop.probability / weightSum : 0;
-        const avg = (drop.minAmount + drop.maxAmount) / 2;
-        const amount = p * avg;
-        addItem(perDrop, drop.itemType, amount, drop.affectedByLeague, league, 'chest', leagueMult);
+export function amountAtRarity(row: ChestRewardRow, rarity: string): number {
+    const exact = row.amountsByRarity[rarity];
+    if (exact !== undefined) {
+        return exact;
     }
-    return scaleRes(perDrop, expectedCount);
+    const common = row.amountsByRarity.Common;
+    if (common !== undefined) {
+        return common;
+    }
+    const values = Object.values(row.amountsByRarity);
+    return values.length > 0 ? values[0] : 0;
 }
 
-function expectedAdResources(ads: AdConfig, league: LeagueRow): Resources {
-    const leagueMult = ads.leagueMultiplier.get(league.id) ?? 1;
+function expectedChestResources(chests: ChestTables, league: LeagueRow): Resources {
+    const rarity = league.slotMachineRarity || 'Common';
     const out = emptyResources();
-    const weightSum = ads.drops.reduce((sum, drop) => sum + drop.probability, 0);
-    for (const drop of ads.drops) {
-        const p = weightSum > 0 ? drop.probability / weightSum : drop.probability;
-        const avg = (drop.minAmount + drop.maxAmount) / 2;
-        addItem(out, drop.itemType, p * avg, drop.affectedByLeague, league, 'ad', leagueMult);
+    for (const row of chests.fixed) {
+        addCoreItem(out, row.itemType, amountAtRarity(row, rarity), league, false);
+    }
+    const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
+    for (const row of chests.random) {
+        const p = weightSum > 0 ? row.probability / weightSum : row.probability;
+        addCoreItem(out, row.itemType, p * amountAtRarity(row, rarity), league, false);
     }
     return out;
 }
 
-function addItem(
+function expectedChestEnergy(chests: ChestTables, league: LeagueRow): number {
+    const rarity = league.slotMachineRarity || 'Common';
+    let energy = 0;
+    for (const row of chests.fixed) {
+        if (normalizeItemType(row.itemType) === 'energy') {
+            energy += amountAtRarity(row, rarity);
+        }
+    }
+    const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
+    for (const row of chests.random) {
+        if (normalizeItemType(row.itemType) !== 'energy') {
+            continue;
+        }
+        const p = weightSum > 0 ? row.probability / weightSum : row.probability;
+        energy += p * amountAtRarity(row, rarity);
+    }
+    return energy;
+}
+
+function addCoreItem(
     out: Resources,
     itemType: string,
     amount: number,
-    affectedByLeague: boolean,
     league: LeagueRow,
-    source: 'goldExp' | 'chest' | 'ad',
-    extraLeagueMult = 1,
+    applySlotLeagueMult: boolean,
 ): void {
     const kind = normalizeItemType(itemType);
-    let goldMult = 1;
-    let expMult = 1;
-    if (affectedByLeague) {
-        if (source === 'ad') {
-            goldMult = extraLeagueMult;
-            expMult = extraLeagueMult;
-        } else if (source === 'chest') {
-            goldMult = extraLeagueMult;
-            expMult = extraLeagueMult;
-        } else {
-            goldMult = league.goldIncomeMultiplier;
-            expMult = league.expIncomeMultiplier;
-        }
-    }
-
-    const essenceMult = affectedByLeague
-        ? (source === 'goldExp' ? league.goldIncomeMultiplier : extraLeagueMult)
-        : 1;
-
     if (kind === 'gold') {
-        out.gold += amount * goldMult;
+        out.gold += applySlotLeagueMult ? amount * league.goldIncomeMultiplier : amount;
     } else if (kind === 'exp') {
-        out.exp += amount * expMult;
+        out.exp += applySlotLeagueMult ? amount * league.expIncomeMultiplier : amount;
     } else if (kind === 'dust') {
         out.dust += amount;
     } else if (kind === 'essence') {
-        out.essence += amount * essenceMult;
+        out.essence += amount;
     }
 }
 
-export function normalizeItemType(itemType: string): string {
-    const raw = itemType.trim().toLowerCase();
-    if (raw === 'gold' || raw.includes('gold')) {
-        return 'gold';
-    }
-    if (raw === 'heroexp' || raw === 'exp' || raw.includes('exp')) {
-        return 'exp';
-    }
-    if (raw === 'astraldust' || raw === 'dust' || raw.includes('dust')) {
-        return 'dust';
-    }
-    if (raw.includes('essence')) {
-        return 'essence';
-    }
-    if (raw === 'energy') {
-        return 'energy';
-    }
-    if (raw === 'pvp' || raw === 'attack') {
-        return 'pvp';
-    }
-    if (raw === 'chest') {
-        return 'chest';
-    }
-    if (raw === 'pve' || raw === 'raid') {
-        return 'pve';
-    }
-    return raw;
-}
-
-function scaleRes(res: Resources, factor: number): Resources {
+function scaleLeagueResources(res: Resources, league: LeagueRow): Resources {
     return {
-        gold: res.gold * factor,
-        exp: res.exp * factor,
-        essence: res.essence * factor,
-        dust: res.dust * factor,
+        gold: res.gold * league.goldIncomeMultiplier,
+        exp: res.exp * league.expIncomeMultiplier,
+        essence: res.essence,
+        dust: res.dust,
     };
 }
 

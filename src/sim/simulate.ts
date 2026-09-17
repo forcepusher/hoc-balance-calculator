@@ -1,6 +1,6 @@
 import { computeGachaEv, dustCostForTierUp, type GachaEv } from './gacha.js';
 import { computeDailyIncome, type DailyIncomeBreakdown } from './income.js';
-import type { GameConfig, LevelRow, ResourceId, Resources, SimParams, TierUpRow } from './types.js';
+import type { GameConfig, LeagueRow, LevelRow, ResourceId, Resources, SimParams, TierUpRow } from './types.js';
 import {
     addResources,
     canAfford,
@@ -23,17 +23,24 @@ export interface LevelStall {
     surplus: Partial<Record<ResourceId, number>>;
 }
 
+export interface LeagueTime {
+    leagueName: string;
+    days: number;
+}
+
 export interface SimResult {
     daysRun: number;
     finalLevel: number;
     maxLevel: number;
     finalLeagueName: string;
+    finalRating: number;
     inventory: Resources;
     checkpoints: CheckpointResult[];
     stalls: LevelStall[];
     bottleneck: string;
     gacha: GachaEv;
     incomeByLeague: Array<{ leagueName: string; income: DailyIncomeBreakdown }>;
+    daysInLeagues: LeagueTime[];
     notes: string[];
 }
 
@@ -56,11 +63,13 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
 
     let day = 0;
     let squadLevel = 1;
-    let leagueIndex = 0;
+    let leagueIndex = clampLeagueIndex(params.startLeagueIndex, config.leagues.length);
     let pendingLeagueIndex: number | null = null;
+    let rating = Math.max(0, params.startRating);
     let inventory = emptyResources();
     const checkpointDays = new Map<number, number>();
     const stallAcc = new Map<string, LevelStall>();
+    const daysInLeague = config.leagues.map(() => 0);
 
     for (const cp of params.checkpoints) {
         if (squadLevel >= cp) {
@@ -75,60 +84,32 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
             pendingLeagueIndex = null;
         }
 
-        const league = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
-        const income = computeDailyIncome(config, league, params);
+        daysInLeague[leagueIndex] = (daysInLeague[leagueIndex] ?? 0) + 1;
+
+        const income = incomeByLeague[Math.min(leagueIndex, incomeByLeague.length - 1)]?.income
+            ?? computeDailyIncome(config, config.leagues[leagueIndex], params);
         inventory = addResources(inventory, income.total);
 
-        let progressed = true;
-        while (progressed) {
-            progressed = false;
+        const league = config.leagues[leagueIndex];
+        rating = Math.max(0, rating + income.pvpWins * (league?.winRating ?? 0) + income.pvpLosses * (league?.lossRating ?? 0));
 
-            const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
-            if (unpaid) {
-                const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
-                const need = { ...emptyResources(), dust: dustNeed };
-                if (canAfford(inventory, need)) {
-                    inventory = subtractResources(inventory, need);
-                    unpaid.paid = true;
-                    progressed = true;
-                    continue;
+        spendDay(pendingTiers, byLevel, inventory, income.total, params, gacha, squadLevel, stallAcc, (next) => {
+            squadLevel = next;
+            for (const cp of params.checkpoints) {
+                if (squadLevel >= cp && !checkpointDays.has(cp)) {
+                    checkpointDays.set(cp, day);
                 }
-                const nextRow = byLevel.get(squadLevel + 1);
-                const surplusNeed = nextRow
-                    ? addResources(need, scaleResources(levelCost(nextRow), params.heroCount))
-                    : need;
-                recordStall(stallAcc, squadLevel, 'dust', inventory, surplusNeed, income.total);
-                break;
             }
+        });
 
-            const nextLevel = squadLevel + 1;
-            const row = byLevel.get(nextLevel);
-            if (!row) {
-                if (squadLevel < maxLevel) {
-                    throw new Error(`LevelProgression: нет уровня ${nextLevel}`);
-                }
-                break;
-            }
-            const need = scaleResources(levelCost(row), params.heroCount);
-            if (canAfford(inventory, need)) {
-                inventory = subtractResources(inventory, need);
-                squadLevel = nextLevel;
-                progressed = true;
-                for (const cp of params.checkpoints) {
-                    if (squadLevel >= cp && !checkpointDays.has(cp)) {
-                        checkpointDays.set(cp, day);
-                    }
-                }
-                const unlocked = leagueIndexForLevel(params.leagueUnlockLevels, squadLevel);
-                if (unlocked > leagueIndex && unlocked !== pendingLeagueIndex) {
-                    pendingLeagueIndex = unlocked;
-                }
-                continue;
-            }
-
-            const limiting = limitingResource(inventory, need, income.total);
-            recordStall(stallAcc, squadLevel, limiting, inventory, need, income.total);
-            break;
+        let nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
+        if (params.weeklyResetEveryDays > 0 && day % params.weeklyResetEveryDays === 0) {
+            nextLeagueIndex = Math.max(0, leagueIndex - 1);
+            const resetLeague = config.leagues[nextLeagueIndex];
+            rating = Math.max(0, (resetLeague?.minRating ?? 0) + params.weeklyResetRatingBonus);
+        }
+        if (nextLeagueIndex !== leagueIndex) {
+            pendingLeagueIndex = nextLeagueIndex;
         }
     }
 
@@ -153,6 +134,7 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
         finalLevel: squadLevel,
         maxLevel,
         finalLeagueName: league?.name || league?.id || '—',
+        finalRating: rating,
         inventory,
         checkpoints: params.checkpoints.map((level) => ({
             level,
@@ -162,15 +144,109 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
         bottleneck: describeBottleneck(stalls, maxLevel),
         gacha,
         incomeByLeague,
+        daysInLeagues: config.leagues.map((row, index) => ({
+            leagueName: row.name || row.id,
+            days: daysInLeague[index] ?? 0,
+        })),
         notes,
     };
+}
+
+function spendDay(
+    pendingTiers: PendingTier[],
+    byLevel: Map<number, LevelRow>,
+    inventoryRef: Resources,
+    daily: Resources,
+    params: SimParams,
+    gacha: GachaEv,
+    squadLevelStart: number,
+    stallAcc: Map<string, LevelStall>,
+    onLevel: (level: number) => void,
+): void {
+    let inventory = inventoryRef;
+    let squadLevel = squadLevelStart;
+    const maxLevel = [...byLevel.keys()].reduce((max, level) => Math.max(max, level), 1);
+
+    let progressed = true;
+    while (progressed) {
+        progressed = false;
+
+        const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
+        if (unpaid) {
+            const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
+            const need = { ...emptyResources(), dust: dustNeed };
+            if (canAfford(inventory, need)) {
+                const next = subtractResources(inventory, need);
+                copyRes(inventory, next);
+                unpaid.paid = true;
+                progressed = true;
+                continue;
+            }
+            const nextRow = byLevel.get(squadLevel + 1);
+            const surplusNeed = nextRow
+                ? addResources(need, scaleResources(levelCost(nextRow), params.heroCount))
+                : need;
+            recordStall(stallAcc, squadLevel, 'dust', inventory, surplusNeed);
+            break;
+        }
+
+        const nextLevel = squadLevel + 1;
+        const row = byLevel.get(nextLevel);
+        if (!row) {
+            if (squadLevel < maxLevel) {
+                throw new Error(`LevelProgression: нет уровня ${nextLevel}`);
+            }
+            break;
+        }
+        const need = scaleResources(levelCost(row), params.heroCount);
+        if (canAfford(inventory, need)) {
+            const next = subtractResources(inventory, need);
+            copyRes(inventory, next);
+            squadLevel = nextLevel;
+            onLevel(squadLevel);
+            progressed = true;
+            continue;
+        }
+
+        const limiting = limitingResource(inventory, need, daily);
+        recordStall(stallAcc, squadLevel, limiting, inventory, need);
+        break;
+    }
+}
+
+function copyRes(target: Resources, source: Resources): void {
+    target.gold = source.gold;
+    target.exp = source.exp;
+    target.essence = source.essence;
+    target.dust = source.dust;
+}
+
+export function leagueIndexForRating(leagues: LeagueRow[], rating: number): number {
+    let best = 0;
+    for (let i = 0; i < leagues.length; i++) {
+        const league = leagues[i];
+        if (rating + 1e-9 >= league.minRating) {
+            best = i;
+            if (league.maxRating > 0 && rating <= league.maxRating) {
+                break;
+            }
+        }
+    }
+    return best;
+}
+
+function clampLeagueIndex(index: number, count: number): number {
+    if (count <= 0) {
+        return 0;
+    }
+    return Math.min(count - 1, Math.max(0, Math.floor(index)));
 }
 
 function levelCost(row: LevelRow): Resources {
     return {
         gold: row.goldCost,
-        exp: row.expCost,
-        essence: row.essenceCost,
+        exp: row.isBreakthrough ? 0 : row.expCost,
+        essence: row.isBreakthrough ? row.essenceCost : 0,
         dust: 0,
     };
 }
@@ -200,16 +276,6 @@ function assignTierUps(config: GameConfig): PendingTier[] {
     return pending;
 }
 
-function leagueIndexForLevel(unlocks: number[], squadLevel: number): number {
-    let index = 0;
-    for (let i = 0; i < unlocks.length; i++) {
-        if (squadLevel >= unlocks[i]) {
-            index = i;
-        }
-    }
-    return index;
-}
-
 function limitingResource(have: Resources, need: Resources, daily: Resources): ResourceId {
     let worst: ResourceId = 'gold';
     let worstDays = -1;
@@ -234,7 +300,6 @@ function recordStall(
     limiting: ResourceId,
     have: Resources,
     need: Resources,
-    _daily: Resources,
 ): void {
     const key = `${squadLevel}:${limiting}`;
     const surplus: Partial<Record<ResourceId, number>> = {};
@@ -294,6 +359,7 @@ export function simulationReportCsv(result: SimResult): string {
     lines.push(`meta,finalLevel,${result.finalLevel}`);
     lines.push(`meta,maxLevel,${result.maxLevel}`);
     lines.push(`meta,finalLeague,${csvCell(result.finalLeagueName)}`);
+    lines.push(`meta,finalRating,${result.finalRating}`);
     for (const cp of result.checkpoints) {
         lines.push(`checkpoint,${cp.level},${cp.day ?? ''}`);
     }
@@ -301,11 +367,15 @@ export function simulationReportCsv(result: SimResult): string {
     for (const stall of result.stalls) {
         lines.push(`stall,${stall.squadLevel}:${stall.limiting},${stall.days}`);
     }
+    for (const row of result.daysInLeagues) {
+        lines.push(`leagueDays,${csvCell(row.leagueName)},${row.days}`);
+    }
     lines.push(`gacha,dustPerNamedShard,${result.gacha.dustPerNamedShard}`);
     lines.push(`gacha,dustPerFactionEmblem,${result.gacha.dustPerFactionEmblem}`);
     lines.push(`gacha,dustPerSquadFullAscension,${result.gacha.dustPerSquadFullAscension}`);
     for (const row of result.incomeByLeague) {
         const t = row.income.total;
+        lines.push(`income,${csvCell(row.leagueName)} spins,${row.income.spins}`);
         lines.push(`income,${csvCell(row.leagueName)} gold,${t.gold}`);
         lines.push(`income,${csvCell(row.leagueName)} exp,${t.exp}`);
         lines.push(`income,${csvCell(row.leagueName)} essence,${t.essence}`);
