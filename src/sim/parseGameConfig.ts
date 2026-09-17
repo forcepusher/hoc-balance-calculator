@@ -173,6 +173,7 @@ function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
     const goldI = col(['gold']);
     const expI = col(['heroexp', 'exp']);
     const dustI = col(['astraldust', 'dust']);
+    const essenceI = optionalColumn(table.headers, ['breakthroughessence', 'essence']);
     const chestI = optionalColumn(table.headers, ['pvpchest', 'chest']);
 
     const rows = table.rows.map((row) => {
@@ -184,6 +185,7 @@ function parsePvpRewards(table: ParsedCsvTable): PvpRewardRow[] {
             gold: parseNumber(row[goldI]),
             exp: parseNumber(row[expI]),
             dust: parseNumber(row[dustI]),
+            essence: essenceI >= 0 ? parseNumber(row[essenceI]) : 0,
             opensChest: chestI >= 0 ? parseBool(row[chestI]) : result === 'Win',
         };
     }).filter((row) => row.leagueId !== '');

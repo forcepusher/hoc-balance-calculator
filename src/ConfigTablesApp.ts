@@ -143,7 +143,7 @@ export class ConfigTablesApp {
             this.paramField('heroCount', 'Герои в отряде', p.heroCount, 1),
             this.paramField('energyPerDay', 'Реген энергии / сутки', p.energyPerDay, 1),
             this.paramField('spinEnergyCost', 'Энергии за спин', p.spinEnergyCost, 1),
-            this.paramField('winRatePct', 'Винрейт PvP %', p.winRate * 100, 1),
+            this.paramField('winRatePct', 'Винрейт PvP %', Number((p.winRate * 100).toFixed(2)), 1),
             this.paramField('dustPerPull', 'Пыль за 1 крутку', p.dustPerPull, 1),
             this.paramField('sHeroCount', 'Герои S в пуле', p.sHeroCount, 1),
             this.paramField('factionCount', 'Фракций (гербы)', p.factionCount, 1),

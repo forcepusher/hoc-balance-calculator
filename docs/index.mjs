@@ -384,6 +384,7 @@ function parsePvpRewards(table) {
   const goldI = col(["gold"]);
   const expI = col(["heroexp", "exp"]);
   const dustI = col(["astraldust", "dust"]);
+  const essenceI = optionalColumn(table.headers, ["breakthroughessence", "essence"]);
   const chestI = optionalColumn(table.headers, ["pvpchest", "chest"]);
   const rows = table.rows.map((row) => {
     const resultRaw = (row[resultI] ?? "").toLowerCase();
@@ -394,6 +395,7 @@ function parsePvpRewards(table) {
       gold: parseNumber(row[goldI]),
       exp: parseNumber(row[expI]),
       dust: parseNumber(row[dustI]),
+      essence: essenceI >= 0 ? parseNumber(row[essenceI]) : 0,
       opensChest: chestI >= 0 ? parseBool(row[chestI]) : result === "Win"
     };
   }).filter((row) => row.leagueId !== "");
@@ -720,7 +722,7 @@ function pvpMatchReward(config, league, result) {
   return {
     gold: row.gold,
     exp: row.exp,
-    essence: 0,
+    essence: row.essence,
     dust: row.dust
   };
 }
@@ -1214,7 +1216,7 @@ var ConfigTablesApp = class {
       this.paramField("heroCount", "\u0413\u0435\u0440\u043E\u0438 \u0432 \u043E\u0442\u0440\u044F\u0434\u0435", p.heroCount, 1),
       this.paramField("energyPerDay", "\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438 / \u0441\u0443\u0442\u043A\u0438", p.energyPerDay, 1),
       this.paramField("spinEnergyCost", "\u042D\u043D\u0435\u0440\u0433\u0438\u0438 \u0437\u0430 \u0441\u043F\u0438\u043D", p.spinEnergyCost, 1),
-      this.paramField("winRatePct", "\u0412\u0438\u043D\u0440\u0435\u0439\u0442 PvP %", p.winRate * 100, 1),
+      this.paramField("winRatePct", "\u0412\u0438\u043D\u0440\u0435\u0439\u0442 PvP %", Number((p.winRate * 100).toFixed(2)), 1),
       this.paramField("dustPerPull", "\u041F\u044B\u043B\u044C \u0437\u0430 1 \u043A\u0440\u0443\u0442\u043A\u0443", p.dustPerPull, 1),
       this.paramField("sHeroCount", "\u0413\u0435\u0440\u043E\u0438 S \u0432 \u043F\u0443\u043B\u0435", p.sHeroCount, 1),
       this.paramField("factionCount", "\u0424\u0440\u0430\u043A\u0446\u0438\u0439 (\u0433\u0435\u0440\u0431\u044B)", p.factionCount, 1),

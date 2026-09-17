@@ -131,7 +131,7 @@ function pvpMatchReward(config: GameConfig, league: LeagueRow, result: 'Win' | '
     return {
         gold: row.gold,
         exp: row.exp,
-        essence: 0,
+        essence: row.essence,
         dust: row.dust,
     };
 }

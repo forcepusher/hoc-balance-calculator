@@ -115,6 +115,7 @@ export interface PvpRewardRow {
     gold: number;
     exp: number;
     dust: number;
+    essence: number;
     opensChest: boolean;
 }
 
