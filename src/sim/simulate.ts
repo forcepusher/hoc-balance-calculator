@@ -1,9 +1,11 @@
-import { computeGachaEv, dustCostForTierUp, type GachaEv } from './gacha.js';
-import { computeDailyIncome, type DailyIncomeBreakdown } from './income.js';
+import { computeGachaEv, pullsForTierUp, type GachaEv } from './gacha.js';
+import { addItem, armsShareFor, computeDailyIncome, type DailyIncomeBreakdown } from './income.js';
 import type { GameConfig, LeagueRow, LevelRow, ResourceId, Resources, SimParams, TierUpRow } from './types.js';
 import {
     addResources,
+    ALL_RESOURCE_IDS,
     canAfford,
+    emptyIncome,
     emptyResources,
     RESOURCE_IDS,
     RESOURCE_LABELS,
@@ -28,12 +30,19 @@ export interface LeagueTime {
     days: number;
 }
 
+export interface EquipmentSummary {
+    pieces: number;
+    goldTotal: number;
+    shardsTotal: number;
+}
+
 export interface SimResult {
     daysRun: number;
     finalLevel: number;
     maxLevel: number;
     finalLeagueName: string;
     finalRating: number;
+    accountLevel: number;
     inventory: Resources;
     checkpoints: CheckpointResult[];
     stalls: LevelStall[];
@@ -41,6 +50,7 @@ export interface SimResult {
     gacha: GachaEv;
     incomeByLeague: Array<{ leagueName: string; income: DailyIncomeBreakdown }>;
     daysInLeagues: LeagueTime[];
+    equipment: EquipmentSummary | null;
     notes: string[];
 }
 
@@ -50,9 +60,20 @@ interface PendingTier {
     paid: boolean;
 }
 
+/** Всё изменяемое состояние одного прогона. */
+interface SimState {
+    inventory: Resources;
+    /** Накопленные побочные именные осколки гачи (на каждого героя поровну). */
+    shardStock: number;
+    squadLevel: number;
+    accountXp: number;
+    accountLevel: number;
+    accountThreshold: number;
+}
+
 export function runSimulation(config: GameConfig, params: SimParams): SimResult {
     const gacha = computeGachaEv(config.gacha, config.tierUps, params);
-    const notes: string[] = [];
+    const notes: string[] = [...config.notes];
     const maxLevel = config.levels.reduce((max, row) => Math.max(max, row.level), 1);
     const byLevel = new Map(config.levels.map((row) => [row.level, row]));
     const pendingTiers = assignTierUps(config);
@@ -61,23 +82,33 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
         income: computeDailyIncome(config, league, params),
     }));
 
+    const equipment = equipmentPlan(config, params, notes);
+    const equipmentGoldPerStep = equipment ? equipment.goldTotal / Math.max(1, maxLevel - 1) : 0;
+
     let day = 0;
-    let squadLevel = 1;
     let leagueIndex = clampLeagueIndex(params.startLeagueIndex, config.leagues.length);
     let pendingLeagueIndex: number | null = null;
     let rating = Math.max(0, params.startRating);
-    let inventory = emptyResources();
+    const xpCfg = config.accountXp;
+    const state: SimState = {
+        inventory: emptyResources(),
+        shardStock: 0,
+        squadLevel: 1,
+        accountXp: 0,
+        accountLevel: 1,
+        accountThreshold: accountTarget(xpCfg.base, xpCfg.growth, 1),
+    };
     const checkpointDays = new Map<number, number>();
     const stallAcc = new Map<string, LevelStall>();
     const daysInLeague = config.leagues.map(() => 0);
 
     for (const cp of params.checkpoints) {
-        if (squadLevel >= cp) {
+        if (state.squadLevel >= cp) {
             checkpointDays.set(cp, 0);
         }
     }
 
-    while (day < params.maxDays && squadLevel < maxLevel) {
+    while (day < params.maxDays && state.squadLevel < maxLevel) {
         day += 1;
         if (pendingLeagueIndex !== null) {
             leagueIndex = pendingLeagueIndex;
@@ -88,32 +119,47 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
 
         const income = incomeByLeague[Math.min(leagueIndex, incomeByLeague.length - 1)]?.income
             ?? computeDailyIncome(config, config.leagues[leagueIndex], params);
-        inventory = addResources(inventory, income.total);
+        state.inventory = addResources(state.inventory, income.total);
+        addAccountXp(state, config, income.total.accountXp, config.leagues[leagueIndex], params);
 
         const league = config.leagues[leagueIndex];
         rating = Math.max(0, rating + income.pvpWins * (league?.winRating ?? 0) + income.pvpLosses * (league?.lossRating ?? 0));
 
-        spendDay(pendingTiers, byLevel, inventory, income.total, params, gacha, squadLevel, stallAcc, (next) => {
-            squadLevel = next;
-            for (const cp of params.checkpoints) {
-                if (squadLevel >= cp && !checkpointDays.has(cp)) {
-                    checkpointDays.set(cp, day);
+        spendDay({
+            pendingTiers,
+            byLevel,
+            state,
+            daily: income.total,
+            params,
+            config,
+            gacha,
+            equipmentGoldPerStep,
+            stallAcc,
+            onLevel: (next) => {
+                for (const cp of params.checkpoints) {
+                    if (next >= cp && !checkpointDays.has(cp)) {
+                        checkpointDays.set(cp, day);
+                    }
                 }
-            }
+            },
+            league,
         });
 
         let nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
         if (params.weeklyResetEveryDays > 0 && day % params.weeklyResetEveryDays === 0) {
-            nextLeagueIndex = Math.max(0, leagueIndex - 1);
-            const resetLeague = config.leagues[nextLeagueIndex];
-            rating = Math.max(0, (resetLeague?.minRating ?? 0) + params.weeklyResetRatingBonus);
+            // Сервер (SeasonsLeaderboardService): рейтинг = min(текущий, ResetRating лиги), лига — по рейтингу;
+            // клиент выдаёт награду ResetRewardAmethysts за лигу, в которой закончился сезон.
+            const ended = config.leagues[leagueIndexForRating(config.leagues, rating)];
+            state.inventory.amethyst += ended?.resetRewardAmethysts ?? 0;
+            rating = Math.max(0, Math.min(rating, ended?.resetRating ?? rating));
+            nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
         }
         if (nextLeagueIndex !== leagueIndex) {
             pendingLeagueIndex = nextLeagueIndex;
         }
     }
 
-    if (squadLevel >= maxLevel) {
+    if (state.squadLevel >= maxLevel) {
         for (const cp of params.checkpoints) {
             if (cp <= maxLevel && !checkpointDays.has(cp)) {
                 checkpointDays.set(cp, day);
@@ -125,17 +171,21 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
     if (unreachable.length > 0) {
         notes.push(`LevelProgression заканчивается на ${maxLevel}, недостижимы: ${unreachable.join(', ')}.`);
     }
+    if (config.gacha.overflow.length > 0) {
+        notes.push('HeroOverflowCap загружен, но избыток осколков → аметисты в симуляции не считается (нет данных о составе пула героев).');
+    }
 
     const stalls = [...stallAcc.values()].sort((a, b) => b.days - a.days);
-    const league = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
+    const finalLeague = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
 
     return {
         daysRun: day,
-        finalLevel: squadLevel,
+        finalLevel: state.squadLevel,
         maxLevel,
-        finalLeagueName: league?.name || league?.id || '—',
+        finalLeagueName: finalLeague?.name || finalLeague?.id || '—',
         finalRating: rating,
-        inventory,
+        accountLevel: state.accountLevel,
+        inventory: state.inventory,
         checkpoints: params.checkpoints.map((level) => ({
             level,
             day: checkpointDays.get(level) ?? null,
@@ -148,77 +198,112 @@ export function runSimulation(config: GameConfig, params: SimParams): SimResult 
             leagueName: row.name || row.id,
             days: daysInLeague[index] ?? 0,
         })),
+        equipment,
         notes,
     };
 }
 
-function spendDay(
-    pendingTiers: PendingTier[],
-    byLevel: Map<number, LevelRow>,
-    inventoryRef: Resources,
-    daily: Resources,
-    params: SimParams,
-    gacha: GachaEv,
-    squadLevelStart: number,
-    stallAcc: Map<string, LevelStall>,
-    onLevel: (level: number) => void,
-): void {
-    let inventory = inventoryRef;
-    let squadLevel = squadLevelStart;
+/** Опыт аккаунта для перехода с уровня `level` на следующий (UserRegularLevelProgress: base × level^growth). */
+function accountTarget(base: number, growth: number, level: number): number {
+    return Math.max(1, Math.floor(base * level ** growth));
+}
+
+function addAccountXp(state: SimState, config: GameConfig, xp: number, league: LeagueRow, params: SimParams): void {
+    if (xp <= 0) {
+        return;
+    }
+    state.accountXp += xp;
+    const cfg = config.accountXp;
+    const ctx = { league, goldMult: false, armsShare: armsShareFor(config, params) };
+    let guard = 0;
+    while (state.accountXp >= state.accountThreshold && guard < 10000) {
+        guard += 1;
+        state.accountLevel += 1;
+        state.accountThreshold += accountTarget(cfg.base, cfg.growth, state.accountLevel);
+        const bag = emptyIncome();
+        for (const reward of config.levelRewards) {
+            addItem(bag, reward.item, reward.amount, ctx);
+        }
+        state.inventory = addResources(state.inventory, bag);
+    }
+}
+
+interface SpendInput {
+    pendingTiers: PendingTier[];
+    byLevel: Map<number, LevelRow>;
+    state: SimState;
+    daily: Resources;
+    params: SimParams;
+    config: GameConfig;
+    gacha: GachaEv;
+    equipmentGoldPerStep: number;
+    stallAcc: Map<string, LevelStall>;
+    onLevel: (level: number) => void;
+    league: LeagueRow;
+}
+
+function spendDay(input: SpendInput): void {
+    const { pendingTiers, byLevel, state, daily, params, config, gacha, equipmentGoldPerStep, stallAcc, onLevel, league } = input;
     const maxLevel = [...byLevel.keys()].reduce((max, level) => Math.max(max, level), 1);
+    const xpUpgrade = config.accountXp.xpUpgrade;
 
     let progressed = true;
     while (progressed) {
         progressed = false;
 
-        const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
+        const unpaid = pendingTiers.find((tier) => !tier.paid && state.squadLevel >= tier.afterLevel);
         if (unpaid) {
-            const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
-            const need = { ...emptyResources(), dust: dustNeed };
-            if (canAfford(inventory, need)) {
-                const next = subtractResources(inventory, need);
-                copyRes(inventory, next);
+            const pulls = pullsForTierUp(unpaid.row, gacha, params.heroCount, state.shardStock, state.inventory.arms);
+            const dustNeed = Number.isFinite(pulls) ? pulls * params.dustPerPull : Number.POSITIVE_INFINITY;
+            if (state.inventory.dust + 1e-9 >= dustNeed) {
+                // Побочные выпадения круток (опыт, лишние осколки и гербы) остаются игроку.
+                state.inventory.dust -= dustNeed;
+                state.inventory.exp += pulls * gacha.expPerPull;
+                state.shardStock += pulls * gacha.shardsPerPull - params.heroCount * unpaid.row.shards;
+                state.inventory.arms += pulls * gacha.armsPerPull - params.heroCount * unpaid.row.arms;
                 unpaid.paid = true;
                 progressed = true;
                 continue;
             }
-            const nextRow = byLevel.get(squadLevel + 1);
+            const nextRow = byLevel.get(state.squadLevel + 1);
+            const need = { ...emptyResources(), dust: Number.isFinite(dustNeed) ? dustNeed : 1e15 };
             const surplusNeed = nextRow
-                ? addResources(need, scaleResources(levelCost(nextRow), params.heroCount))
+                ? addResources(need, levelNeed(nextRow, params, equipmentGoldPerStep))
                 : need;
-            recordStall(stallAcc, squadLevel, 'dust', inventory, surplusNeed);
+            recordStall(stallAcc, state.squadLevel, 'dust', state.inventory, surplusNeed);
             break;
         }
 
-        const nextLevel = squadLevel + 1;
+        const nextLevel = state.squadLevel + 1;
         const row = byLevel.get(nextLevel);
         if (!row) {
-            if (squadLevel < maxLevel) {
+            if (state.squadLevel < maxLevel) {
                 throw new Error(`LevelProgression: нет уровня ${nextLevel}`);
             }
             break;
         }
-        const need = scaleResources(levelCost(row), params.heroCount);
-        if (canAfford(inventory, need)) {
-            const next = subtractResources(inventory, need);
-            copyRes(inventory, next);
-            squadLevel = nextLevel;
-            onLevel(squadLevel);
+        const need = levelNeed(row, params, equipmentGoldPerStep);
+        if (canAfford(state.inventory, need)) {
+            state.inventory = subtractResources(state.inventory, need);
+            state.squadLevel = nextLevel;
+            if (xpUpgrade > 0) {
+                addAccountXp(state, config, xpUpgrade * params.heroCount, league, params);
+            }
+            onLevel(state.squadLevel);
             progressed = true;
             continue;
         }
 
-        const limiting = limitingResource(inventory, need, daily);
-        recordStall(stallAcc, squadLevel, limiting, inventory, need);
+        const limiting = limitingResource(state.inventory, need, daily);
+        recordStall(stallAcc, state.squadLevel, limiting, state.inventory, need);
         break;
     }
 }
 
-function copyRes(target: Resources, source: Resources): void {
-    target.gold = source.gold;
-    target.exp = source.exp;
-    target.essence = source.essence;
-    target.dust = source.dust;
+function levelNeed(row: LevelRow, params: SimParams, equipmentGoldPerStep: number): Resources {
+    const need = scaleResources(levelCost(row), params.heroCount);
+    need.gold += equipmentGoldPerStep;
+    return need;
 }
 
 export function leagueIndexForRating(leagues: LeagueRow[], rating: number): number {
@@ -244,11 +329,47 @@ function clampLeagueIndex(index: number, count: number): number {
 
 function levelCost(row: LevelRow): Resources {
     return {
+        ...emptyResources(),
         gold: row.goldCost,
         exp: row.isBreakthrough ? 0 : row.expCost,
         essence: row.isBreakthrough ? row.essenceCost : 0,
-        dust: 0,
     };
+}
+
+/** Экипировка: ковка + улучшения до целевого уровня (с учётом шанса успеха), золото размазано по уровням отряда. */
+function equipmentPlan(config: GameConfig, params: SimParams, notes: string[]): EquipmentSummary | null {
+    if (params.equipmentTargetLevel <= 0) {
+        if (config.equipment) {
+            notes.push('Таблицы экипировки загружены, но «Целевой уровень экипировки» = 0 — сток золота выключен.');
+        }
+        return null;
+    }
+    if (!config.equipment) {
+        notes.push('Задан целевой уровень экипировки, но таблицы EquipmentForgeConfig/EquipmentUpgradeConfig не загружены (в проде их пока нет) — сток не считается.');
+        return null;
+    }
+    const pieces = params.heroCount * Math.max(0, params.equipmentPiecesPerHero);
+    const forgeAll = config.equipment.forge;
+    const rarityForge = forgeAll.filter((r) => r.rarity.toLowerCase() === params.equipmentRarity.toLowerCase());
+    const forge = rarityForge.length > 0 ? rarityForge : forgeAll;
+    const forgeGold = forge.length > 0 ? forge.reduce((a, r) => a + r.goldCost, 0) / forge.length : 0;
+    const forgeShards = forge.length > 0 ? forge.reduce((a, r) => a + r.shardCost, 0) / forge.length : 0;
+    let upGold = 0;
+    let upShards = 0;
+    for (const row of config.equipment.upgrades) {
+        if (row.rarity.toLowerCase() === params.equipmentRarity.toLowerCase()
+            && row.level >= 1 && row.level <= params.equipmentTargetLevel) {
+            const success = row.successProbability > 0 ? Math.min(1, row.successProbability) : 1;
+            upGold += row.goldCost / success;
+            upShards += row.shardCost / success;
+        }
+    }
+    const goldTotal = pieces * (forgeGold + upGold);
+    const shardsTotal = pieces * (forgeShards + upShards);
+    if (shardsTotal > 0) {
+        notes.push(`Экипировка требует ещё ${Math.round(shardsTotal).toLocaleString('ru-RU')} осколков кузни — источник осколков в таблицах не описан, в симуляции они считаются доступными.`);
+    }
+    return { pieces, goldTotal, shardsTotal };
 }
 
 function assignTierUps(config: GameConfig): PendingTier[] {
@@ -360,6 +481,7 @@ export function simulationReportCsv(result: SimResult): string {
     lines.push(`meta,maxLevel,${result.maxLevel}`);
     lines.push(`meta,finalLeague,${csvCell(result.finalLeagueName)}`);
     lines.push(`meta,finalRating,${result.finalRating}`);
+    lines.push(`meta,accountLevel,${result.accountLevel}`);
     for (const cp of result.checkpoints) {
         lines.push(`checkpoint,${cp.level},${cp.day ?? ''}`);
     }
@@ -376,10 +498,12 @@ export function simulationReportCsv(result: SimResult): string {
     for (const row of result.incomeByLeague) {
         const t = row.income.total;
         lines.push(`income,${csvCell(row.leagueName)} spins,${row.income.spins}`);
-        lines.push(`income,${csvCell(row.leagueName)} gold,${t.gold}`);
-        lines.push(`income,${csvCell(row.leagueName)} exp,${t.exp}`);
-        lines.push(`income,${csvCell(row.leagueName)} essence,${t.essence}`);
-        lines.push(`income,${csvCell(row.leagueName)} dust,${t.dust}`);
+        for (const id of ALL_RESOURCE_IDS) {
+            lines.push(`income,${csvCell(row.leagueName)} ${id},${t[id]}`);
+        }
+    }
+    for (const id of ALL_RESOURCE_IDS) {
+        lines.push(`inventory,${id},${result.inventory[id]}`);
     }
     return `${lines.join('\n')}\n`;
 }

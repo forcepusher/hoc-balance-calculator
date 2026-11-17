@@ -1,4 +1,10 @@
-import { CONFIG_TABLES, type ConfigTableId } from './configTables.js';
+import {
+    CONFIG_GROUP_LABELS,
+    CONFIG_TABLES,
+    type ConfigTableDef,
+    type ConfigTableGroup,
+    type ConfigTableId,
+} from './configTables.js';
 import {
     fetchGoogleSheetCsv,
     normalizeGoogleSheetUrl,
@@ -6,9 +12,22 @@ import {
     shouldRewritePastedSheetUrl,
     type ParsedCsvTable,
 } from './googleSheets.js';
-import { describeChestParse, describeDailyIncome, parseChests, parseDailyIncome, parseGameConfig } from './sim/parseGameConfig.js';
+import {
+    describeManualDailyIncome,
+    parseChestSlotTable,
+    parseGameConfig,
+    parseManualDailyIncome,
+    parseRemoteDefaults,
+} from './sim/parseGameConfig.js';
 import { runSimulation, simulationReportCsv, type SimResult } from './sim/simulate.js';
-import { DEFAULT_SIM_PARAMS, RESOURCE_LABELS, type ResourceId, type SimParams } from './sim/types.js';
+import {
+    ALL_RESOURCE_IDS,
+    DEFAULT_SIM_PARAMS,
+    RESOURCE_LABELS,
+    type ResourceId,
+    type Resources,
+    type SimParams,
+} from './sim/types.js';
 
 interface TableRowUi {
     input: HTMLInputElement;
@@ -16,12 +35,16 @@ interface TableRowUi {
     openLink: HTMLAnchorElement;
 }
 
+const REQUIRED_TABLES = CONFIG_TABLES.filter((table) => table.required);
+
 export class ConfigTablesApp {
     private readonly parsedTables = new Map<ConfigTableId, ParsedCsvTable>();
     private readonly rowUi = new Map<ConfigTableId, TableRowUi>();
     private readonly rowGeneration = new Map<ConfigTableId, number>();
     private readonly dirtyIds = new Set<ConfigTableId>();
     private readonly paramInputs = new Map<string, HTMLInputElement>();
+    /** Параметры, которые пользователь поменял руками — значения из CommonRemoteConfigs их не затирают. */
+    private readonly touchedParams = new Set<string>();
     private readonly root: HTMLElement;
     private readonly loadButton: HTMLButtonElement;
     private readonly runButton: HTMLButtonElement;
@@ -76,12 +99,12 @@ export class ConfigTablesApp {
         ].join(';');
 
         const title = document.createElement('h2');
-        title.textContent = 'HoC Balance — симуляция (альфа) V2';
+        title.textContent = 'HoC Balance — симуляция (альфа) V3';
         title.style.cssText = 'margin: 0 0 8px; font-size: 20px; font-weight: 600;';
         root.appendChild(title);
 
         const intro = document.createElement('p');
-        intro.textContent = 'EV-симулятор активного дня: слоты + арена + DailyIncome. Лиги по рейтингу с еженедельным сбросом. 5 героев качаются синхронно.';
+        intro.textContent = 'EV-симулятор активного дня: слоты (X1/X3) + сундуки + арена + гача + замки, награды, задания, мини-ивенты. Лиги по рейтингу с еженедельным сбросом сезона. 5 героев качаются синхронно. Таблицы по умолчанию — прод (RemoteSheetsList).';
         intro.style.cssText = 'margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;';
         root.appendChild(intro);
 
@@ -119,8 +142,20 @@ export class ConfigTablesApp {
 
         const list = document.createElement('div');
         list.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
+        const groups: ConfigTableGroup[] = [];
         for (const table of CONFIG_TABLES) {
-            list.appendChild(this.createTableRow(table.id, table.description, table.defaultUrl));
+            if (!groups.includes(table.group)) {
+                groups.push(table.group);
+            }
+        }
+        for (const group of groups) {
+            const heading = document.createElement('div');
+            heading.textContent = CONFIG_GROUP_LABELS[group];
+            heading.style.cssText = 'margin-top: 6px; font-size: 12px; font-weight: 600; color: #8fb4e8; text-transform: uppercase; letter-spacing: 0.04em;';
+            list.appendChild(heading);
+            for (const table of CONFIG_TABLES.filter((t) => t.group === group)) {
+                list.appendChild(this.createTableRow(table));
+            }
         }
         details.appendChild(list);
         return details;
@@ -144,17 +179,40 @@ export class ConfigTablesApp {
             this.paramField('energyPerDay', 'Реген энергии / сутки', p.energyPerDay, 1),
             this.paramField('spinEnergyCost', 'Энергии за спин', p.spinEnergyCost, 1),
             this.paramField('winRatePct', 'Винрейт PvP %', Number((p.winRate * 100).toFixed(2)), 1),
-            this.paramField('dustPerPull', 'Пыль за 1 крутку', p.dustPerPull, 1),
+            this.paramField('dustPerPull', 'Пыль за 1 крутку (gacha-summon-price-1)', p.dustPerPull, 1),
             this.paramField('sHeroCount', 'Герои S в пуле', p.sHeroCount, 1),
-            this.paramField('factionCount', 'Фракций (гербы)', p.factionCount, 1),
-            this.paramField('gachaPity', 'Гарант S (крутка)', p.gachaPity, 1),
+            this.paramField('factionCount', 'Фракций среди героев отряда (гербы)', p.factionCount, 1),
+            this.paramField('gachaPity', 'Гарант S (gacha-summon-pity-value)', p.gachaPity, 1),
+            this.paramField('targetHeroPity', 'Целевой S-герой: гарант после 3 промахов (1/0)', p.targetHeroPity, 1),
             this.paramField('startLeagueIndex', 'Стартовая лига (1 = Бронза)', p.startLeagueIndex + 1, 1),
             this.paramField('startRating', 'Стартовый рейтинг', p.startRating, 1),
-            this.paramField('weeklyResetEveryDays', 'Сброс лиги каждые N дней', p.weeklyResetEveryDays, 1),
-            this.paramField('weeklyResetRatingBonus', 'Рейтинг после сброса: min +', p.weeklyResetRatingBonus, 1),
+            this.paramField('weeklyResetEveryDays', 'Сброс сезона каждые N дней (сервер: 7)', p.weeklyResetEveryDays, 1),
             this.paramField('maxDays', 'Макс. дней', p.maxDays, 1),
         );
         wrap.appendChild(grid);
+
+        const incomeHeading = document.createElement('div');
+        incomeHeading.textContent = 'Доп. источники дохода и стоки';
+        incomeHeading.style.cssText = 'font-weight: 600; font-size: 13px; margin: 12px 0 8px; color: #d0d0d0;';
+        wrap.appendChild(incomeHeading);
+
+        const incomeGrid = document.createElement('div');
+        incomeGrid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;';
+        incomeGrid.append(
+            this.paramField('premiumDaily', 'Платная ветка ежедневных наград (1/0)', p.premiumDaily, 1),
+            this.paramField('taskCompletionPct', 'Выполнение дейликов/недельных, %', p.taskCompletionPct, 1),
+            this.paramField('castlesActive', 'Замков с добычей (CastlePassiveRewardConfig)', p.castlesActive, 1),
+            this.paramField('castleLevel', 'Уровень добычи замков', p.castleLevel, 1),
+            this.paramField('castleCollectsPerDay', 'Сборов добычи в день (цикл 8 ч → до 3)', p.castleCollectsPerDay, 1),
+            this.paramField('miniEventsOn', 'Мини-ивенты (1/0)', p.miniEventsOn, 1),
+            this.paramField('miniEventDays', 'Длительность мини-ивента, дней', p.miniEventDays, 1),
+            this.paramField('miniEventRank', 'Место в «Чемпионах битв» (0 = без награды)', p.miniEventRank, 1),
+            this.paramField('useManualDailyIncome', 'Прибавить ручную таблицу DailyIncome (1/0)', p.useManualDailyIncome, 1),
+            this.paramField('equipmentPiecesPerHero', 'Экипировки на героя, шт.', p.equipmentPiecesPerHero, 1),
+            this.paramField('equipmentTargetLevel', 'Целевой уровень экипировки (0 = выкл.)', p.equipmentTargetLevel, 1),
+            this.paramField('equipmentRarity', 'Редкость экипировки', p.equipmentRarity, 1, false, true),
+        );
+        wrap.appendChild(incomeGrid);
 
         const extra = document.createElement('div');
         extra.style.cssText = 'display: grid; gap: 10px; margin-top: 10px;';
@@ -180,7 +238,7 @@ export class ConfigTablesApp {
         wrap.appendChild(other);
 
         const hint = document.createElement('div');
-        hint.textContent = 'Реген 288/сутки. WR 55%. Лига по рейтингу; множители новой лиги со следующего дня. Каждые 7 дней — минус 1 лига, рейтинг = нижняя граница + 100. Сундук T3 за каждую победу: фикс. награды + один RND.';
+        hint.textContent = 'Реген энергии и параметры гачи подтягиваются из CommonRemoteConfigs (если поле не правили руками). WR 55%. Лига по рейтингу; множители новой лиги со следующего дня. Сброс сезона: рейтинг = min(текущий, ResetRating лиги) + награда ResetRewardAmethysts. Золото из слотов, сундуков, PvP и ежедневных наград умножается на GoldIncomeMultiplier лиги, опыт PvP — на ExpIncomeMultiplier (как в клиенте); добыча замков и мини-ивенты — без множителей.';
         hint.style.cssText = 'margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;';
         wrap.appendChild(hint);
         return wrap;
@@ -192,6 +250,7 @@ export class ConfigTablesApp {
         value: number | string,
         step: number,
         wide = false,
+        text = false,
     ): HTMLElement {
         const wrap = document.createElement('label');
         wrap.style.cssText = `display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #bdbdbd;${wide ? ' grid-column: 1 / -1;' : ''}`;
@@ -199,11 +258,12 @@ export class ConfigTablesApp {
 
         const input = document.createElement('input');
         input.value = String(value);
-        if (!wide) {
+        if (!wide && !text) {
             input.type = 'number';
             input.min = '0';
             input.step = String(step || 1);
         }
+        input.addEventListener('input', () => this.touchedParams.add(key));
         input.style.cssText = [
             'padding: 7px 9px',
             'border: 1px solid #444',
@@ -235,7 +295,9 @@ export class ConfigTablesApp {
         return button;
     }
 
-    private createTableRow(id: ConfigTableId, description: string, defaultUrl: string): HTMLElement {
+    private createTableRow(table: ConfigTableDef): HTMLElement {
+        const { id, defaultUrl } = table;
+        const description = `${table.description}${table.required ? '' : ' · необязательная'}`;
         const row = document.createElement('div');
         row.style.cssText = [
             'display: flex',
@@ -267,6 +329,7 @@ export class ConfigTablesApp {
         const input = document.createElement('input');
         input.type = 'url';
         input.value = defaultUrl;
+        input.placeholder = 'Ссылка Google Sheets (в проде этой таблицы пока нет — можно вставить свою)';
         input.spellcheck = false;
         input.setAttribute('aria-label', `${id} Google Sheets URL`);
         input.style.cssText = [
@@ -334,13 +397,33 @@ export class ConfigTablesApp {
         }
 
         const loaded = results.filter(Boolean).length;
+        const requiredLoaded = REQUIRED_TABLES.filter((table) => this.parsedTables.has(table.id)).length;
         this.loadButton.disabled = false;
-        this.summaryEl.textContent = `Загружено ${loaded} / ${CONFIG_TABLES.length}`;
-        this.summaryEl.style.color = loaded === CONFIG_TABLES.length ? '#7dcea0' : '#e74c3c';
+        this.summaryEl.textContent = `Загружено ${loaded} / ${CONFIG_TABLES.length} (обязательных ${requiredLoaded} / ${REQUIRED_TABLES.length})`;
+        this.summaryEl.style.color = requiredLoaded === REQUIRED_TABLES.length ? '#7dcea0' : '#e74c3c';
 
-        if (loaded === CONFIG_TABLES.length) {
+        this.applyRemoteDefaults();
+        if (requiredLoaded === REQUIRED_TABLES.length) {
             this.runSim();
         }
+    }
+
+    /** Реген энергии, цена и гарант гачи из CommonRemoteConfigs — если поле не правили руками. */
+    private applyRemoteDefaults(): void {
+        const table = this.parsedTables.get('CommonRemoteConfigs');
+        if (!table) {
+            return;
+        }
+        const remote = parseRemoteDefaults(table);
+        const set = (key: string, value: number | undefined): void => {
+            const input = this.paramInputs.get(key);
+            if (input && value !== undefined && Number.isFinite(value) && !this.touchedParams.has(key)) {
+                input.value = String(Math.round(value * 100) / 100);
+            }
+        };
+        set('energyPerDay', remote.energyPerDay);
+        set('dustPerPull', remote.summonPrice);
+        set('gachaPity', remote.pity);
     }
 
     private async loadOne(id: ConfigTableId, batchGeneration?: number): Promise<boolean> {
@@ -357,9 +440,14 @@ export class ConfigTablesApp {
         const url = normalizeGoogleSheetUrl(ui.input.value);
         ui.input.value = url;
         ui.openLink.href = url || '#';
+        this.parsedTables.delete(id);
+
+        if (url === '') {
+            this.setStatus(id, 'Ссылка не задана — таблица пропущена', '#9e9e9e');
+            return false;
+        }
 
         this.setStatus(id, 'Загрузка…', '#9e9e9e');
-        this.parsedTables.delete(id);
 
         try {
             const csv = await fetchGoogleSheetCsv(url);
@@ -381,15 +469,13 @@ export class ConfigTablesApp {
     }
 
     private describeParsedTable(id: ConfigTableId, parsed: ParsedCsvTable): string {
-        if (id === 'ChestT3Rewards' || id === 'ChestT3RND') {
-            const empty = { headers: ['Key'], rows: [], matrix: [['Key']] };
-            const chests = id === 'ChestT3Rewards'
-                ? parseChests(parsed, empty)
-                : parseChests(empty, parsed);
-            return describeChestParse(chests);
+        if (id === 'ChestSlot' || id === 'ChestPvp') {
+            const table = parseChestSlotTable(parsed);
+            const slots = Math.max(...Object.values(table).map((rarity) => rarity.length));
+            return `${Object.keys(table).length} редкостей · до ${slots} слотов`;
         }
         if (id === 'DailyIncome') {
-            return describeDailyIncome(parseDailyIncome(parsed));
+            return describeManualDailyIncome(parseManualDailyIncome(parsed));
         }
         const headerPreview = parsed.headers.filter((header) => header !== '').join(', ');
         return `${parsed.rows.length} строк · ${headerPreview}`;
@@ -434,13 +520,26 @@ export class ConfigTablesApp {
             sHeroCount: Math.max(1, Math.round(num('sHeroCount', d.sHeroCount))),
             factionCount: Math.max(1, Math.round(num('factionCount', d.factionCount))),
             gachaPity: Math.max(1, Math.round(num('gachaPity', d.gachaPity))),
+            targetHeroPity: num('targetHeroPity', d.targetHeroPity) > 0 ? 1 : 0,
             maxDays: Math.max(1, Math.round(num('maxDays', d.maxDays))),
             checkpoints: list('checkpoints', d.checkpoints),
             startLeagueIndex: Math.max(0, Math.round(num('startLeagueIndex', d.startLeagueIndex + 1)) - 1),
             startRating: Math.max(0, num('startRating', d.startRating)),
             weeklyResetEveryDays: Math.max(0, Math.round(num('weeklyResetEveryDays', d.weeklyResetEveryDays))),
-            weeklyResetRatingBonus: num('weeklyResetRatingBonus', d.weeklyResetRatingBonus),
+            premiumDaily: num('premiumDaily', d.premiumDaily) > 0 ? 1 : 0,
+            taskCompletionPct: Math.min(100, Math.max(0, num('taskCompletionPct', d.taskCompletionPct))),
+            useManualDailyIncome: num('useManualDailyIncome', d.useManualDailyIncome) > 0 ? 1 : 0,
+            castlesActive: Math.max(0, Math.round(num('castlesActive', d.castlesActive))),
+            castleLevel: Math.max(0, Math.round(num('castleLevel', d.castleLevel))),
+            castleCollectsPerDay: Math.max(0, num('castleCollectsPerDay', d.castleCollectsPerDay)),
+            miniEventsOn: num('miniEventsOn', d.miniEventsOn) > 0 ? 1 : 0,
+            miniEventDays: Math.max(1, Math.round(num('miniEventDays', d.miniEventDays))),
+            miniEventRank: Math.max(0, Math.round(num('miniEventRank', d.miniEventRank))),
+            equipmentPiecesPerHero: Math.max(0, Math.round(num('equipmentPiecesPerHero', d.equipmentPiecesPerHero))),
+            equipmentTargetLevel: Math.max(0, Math.round(num('equipmentTargetLevel', d.equipmentTargetLevel))),
+            equipmentRarity: (this.paramInputs.get('equipmentRarity')?.value ?? d.equipmentRarity).trim() || d.equipmentRarity,
             otherDaily: {
+                ...d.otherDaily,
                 gold: Math.max(0, num('otherGold', d.otherDaily.gold)),
                 exp: Math.max(0, num('otherExp', d.otherDaily.exp)),
                 essence: Math.max(0, num('otherEssence', d.otherDaily.essence)),
@@ -453,8 +552,9 @@ export class ConfigTablesApp {
     private runSim(): void {
         this.runButton.disabled = true;
         try {
-            if (this.parsedTables.size < CONFIG_TABLES.length) {
-                throw new Error('Сначала загрузите все таблицы');
+            const missing = REQUIRED_TABLES.filter((table) => !this.parsedTables.has(table.id));
+            if (missing.length > 0) {
+                throw new Error(`Сначала загрузите обязательные таблицы: ${missing.map((table) => table.id).join(', ')}`);
             }
             const config = parseGameConfig(this.parsedTables);
             const result = runSimulation(config, this.readParams());
@@ -512,17 +612,21 @@ export class ConfigTablesApp {
         this.resultsEl.appendChild(this.simpleTable(
             ['Метрика', 'Значение'],
             [
-                ['Круток до S (с гарантом 80)', this.fmt(g.pullsToS)],
+                ['Круток до S (с гарантом)', this.fmt(g.pullsToS)],
+                ['S-выпадений до целевого героя', this.fmt(g.sDropsPerTarget)],
+                ['Круток на 1 именной осколок', this.fmt(g.pullsToNamedShard)],
                 ['Пыли на 1 именной осколок', this.fmt(g.dustPerNamedShard)],
-                ['Пыли на 1 фракционный герб', this.fmt(g.dustPerFactionEmblem)],
-                [`Полное возвышение 1 героя (${g.shardsPerHero} оск. + ${g.armsPerHero} герб.)`, this.fmt(g.dustPerHeroFullAscension)],
-                ['Полное возвышение отряда', this.fmt(g.dustPerSquadFullAscension)],
+                ['Пыли на 1 фракционный герб (одиночно)', this.fmt(g.dustPerFactionEmblem)],
+                [`Полное возвышение 1 героя (${g.shardsPerHero} оск. + ${g.armsPerHero} герб.), без побочных наград`, this.fmt(g.dustPerHeroFullAscension)],
+                ['Полное возвышение отряда, без побочных наград', this.fmt(g.dustPerSquadFullAscension)],
+                ['Опыта героев за крутку (побочно)', this.fmt(g.expPerPull)],
+                ['Полезных гербов отряда за крутку', this.fmt(g.armsPerPull)],
             ],
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Дневной доход по лигам'));
         this.resultsEl.appendChild(this.simpleTable(
-            ['Лига', 'Спины', 'PvP боёв', 'Сундуки', 'Золото', 'Опыт', 'Эссенция', 'Пыль'],
+            ['Лига', 'Спины', 'PvP боёв', 'Сундуки', 'Золото', 'Опыт', 'Эссенция', 'Пыль', 'Гербы', 'Аметисты', 'Декор'],
             result.incomeByLeague.map((row) => [
                 row.leagueName,
                 this.fmt(row.income.spins),
@@ -532,7 +636,37 @@ export class ConfigTablesApp {
                 this.fmt(row.income.total.exp),
                 this.fmt(row.income.total.essence),
                 this.fmt(row.income.total.dust),
+                this.fmt(row.income.total.arms),
+                this.fmt(row.income.total.amethyst),
+                this.fmt(row.income.total.decor),
             ]),
+        ));
+
+        this.resultsEl.appendChild(this.sectionTitle('Источники золота / опыта / пыли по лигам'));
+        this.resultsEl.appendChild(this.simpleTable(
+            ['Лига', 'Источник', 'Золото', 'Опыт', 'Пыль', 'Эссенция'],
+            result.incomeByLeague.flatMap((row) => {
+                const i = row.income;
+                const sources: Array<[string, Resources]> = [
+                    ['Слоты', i.fromSlots],
+                    ['PvP', i.fromPvp],
+                    ['Сундуки слотов', i.fromSlotChests],
+                    ['Сундуки PvP', i.fromPvpChests],
+                    ['Ежедневные награды', i.fromDaily],
+                    ['Задания', i.fromTasks],
+                    ['Замки', i.fromCastle],
+                    ['Мини-ивенты', i.fromEvents],
+                    ['Прочее', i.fromOther],
+                ];
+                return sources.map(([label, res]) => [
+                    row.leagueName,
+                    label,
+                    this.fmt(res.gold),
+                    this.fmt(res.exp),
+                    this.fmt(res.dust),
+                    this.fmt(res.essence),
+                ]);
+            }),
         ));
 
         this.resultsEl.appendChild(this.sectionTitle('Дней в лигах'));
@@ -543,8 +677,14 @@ export class ConfigTablesApp {
 
         this.resultsEl.appendChild(this.sectionTitle('Остаток инвентаря'));
         this.resultsEl.appendChild(this.kvLine(
-            `Золото ${this.fmt(result.inventory.gold)} · Опыт ${this.fmt(result.inventory.exp)} · Эссенция ${this.fmt(result.inventory.essence)} · Пыль ${this.fmt(result.inventory.dust)}`,
+            ALL_RESOURCE_IDS.map((id) => `${RESOURCE_LABELS[id]} ${this.fmt(result.inventory[id])}`).join(' · '),
         ));
+        this.resultsEl.appendChild(this.kvLine(`Уровень аккаунта к концу симуляции: ${result.accountLevel}`));
+        if (result.equipment) {
+            this.resultsEl.appendChild(this.kvLine(
+                `Экипировка: ${result.equipment.pieces} шт. · золото ${this.fmt(result.equipment.goldTotal)} · осколки кузни ${this.fmt(result.equipment.shardsTotal)}`,
+            ));
+        }
 
         for (const note of result.notes) {
             this.resultsEl.appendChild(this.kvLine(note, '#c9a227'));

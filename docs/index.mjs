@@ -1,49 +1,204 @@
 // src/configTables.ts
+var CONFIG_GROUP_LABELS = {
+  core: "\u041F\u0440\u043E\u043A\u0430\u0447\u043A\u0430 \u0433\u0435\u0440\u043E\u0435\u0432 \u0438 \u043E\u0431\u0449\u0438\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0438",
+  slots: "\u0421\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u0430",
+  gacha: "\u0413\u0430\u0447\u0430",
+  pvp: "PvP \u0438 \u043B\u0438\u0433\u0438",
+  chests: "\u0421\u0443\u043D\u0434\u0443\u043A\u0438",
+  income: "\u0414\u043E\u043F. \u0434\u043E\u0445\u043E\u0434: \u0437\u0430\u043C\u043A\u0438, \u043D\u0430\u0433\u0440\u0430\u0434\u044B, \u0437\u0430\u0434\u0430\u043D\u0438\u044F",
+  events: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u044B",
+  equipment: "\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430 (\u0441\u0442\u043E\u043A \u0437\u043E\u043B\u043E\u0442\u0430)",
+  manual: "\u0420\u0443\u0447\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435"
+};
 var CONFIG_TABLES = [
   {
+    id: "CommonRemoteConfigs",
+    description: "\u041E\u0431\u0449\u0438\u0435 \u0440\u0435\u043C\u043E\u0443\u0442-\u043A\u043E\u043D\u0444\u0438\u0433\u0438: \u0440\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438, \u0446\u0435\u043D\u0430 \u0438 \u0433\u0430\u0440\u0430\u043D\u0442 \u0433\u0430\u0447\u0438",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1x3YLum_iiAW2QeWONCE0-fBcZWvoMWpo5nbZWnrHuig",
+    required: false,
+    group: "core"
+  },
+  {
     id: "LevelProgression",
-    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043E\u043F\u044B\u0442\u0430, \u0437\u043E\u043B\u043E\u0442\u0430, \u044D\u0441\u0441\u0435\u043D\u0446\u0438\u0438",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/17-fGfxdNr-qoDdt2yuW_g3XAVsMHFdlN4mweEvxICNo"
+    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043E\u043F\u044B\u0442\u0430, \u0437\u043E\u043B\u043E\u0442\u0430, \u044D\u0441\u0441\u0435\u043D\u0446\u0438\u0438 \u043F\u0440\u043E\u043A\u0430\u0447\u043A\u0438 \u0433\u0435\u0440\u043E\u044F",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/18ZPp1PTeuFilToA1JXj9yMxGxFybfrvtH6VUUWL3fFU",
+    required: true,
+    group: "core"
   },
   {
     id: "HeroTierUp",
-    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u0432 \u043E\u0441\u043A\u043E\u043B\u043A\u0430\u0445 \u0438 \u0433\u0435\u0440\u0431\u0430\u0445",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1xk8lw6oW5nvu_9cZ5tPeAGgLmK4OuTu9HoiKwi02jDs"
+    description: "\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043F\u043E\u0432\u044B\u0448\u0435\u043D\u0438\u044F \u0442\u0438\u0440\u0430: \u043E\u0441\u043A\u043E\u043B\u043A\u0438 \u0438 \u0433\u0435\u0440\u0431\u044B",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1jispJWz8k8XLiPeb8VWpNaMfCcjoyIbyd5geP_lG6c8",
+    required: true,
+    group: "core"
   },
   {
     id: "SlotMachineBaseDrops",
-    description: "\u0428\u0430\u043D\u0441\u044B \u0434\u0440\u043E\u043F\u0430 \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1j1Pc686613peoJ9eY7Dj-8gRsm1I4AUBQtJIyKD1NnU?gid=1058081879"
+    description: "\u0414\u0440\u043E\u043F \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B + InitialChance (X1/X3)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1AMbwRIeet9SjweOGSi3BelqvB_5Ijv8AXw3ZXMu8t2U",
+    required: true,
+    group: "slots"
   },
   {
     id: "GachaBaseDrops",
-    description: "\u0428\u0430\u043D\u0441\u044B \u0434\u0440\u043E\u043F\u0430",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/12ChBhfVgYk3JbBfrgOznM5VQI0em_x0w0shNzuQYWC8"
+    description: "\u0428\u0430\u043D\u0441\u044B \u0433\u0430\u0447\u0438: S/A \u0433\u0435\u0440\u043E\u0439, \u0433\u0435\u0440\u0431\u044B, \u043E\u043F\u044B\u0442 \u0433\u0435\u0440\u043E\u0435\u0432",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1cAR4qxQMwd7ClY6vjc-PFnctqJ3AFiDFjitblGuSGbs",
+    required: true,
+    group: "gacha"
+  },
+  {
+    id: "GachaArmsDistribution",
+    description: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 \u0433\u0435\u0440\u0431\u043E\u0432 \u0433\u0430\u0447\u0438 \u043F\u043E \u0444\u0440\u0430\u043A\u0446\u0438\u044F\u043C (\u043A\u043E\u043B-\u0432\u043E)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/124o0g7ykCREjS94IOOlhLGaR6qfSFovmi2QkpKLshSo",
+    required: true,
+    group: "gacha"
+  },
+  {
+    id: "GachaHeroExpDistribution",
+    description: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 \u043E\u043F\u044B\u0442\u0430 \u0433\u0435\u0440\u043E\u0435\u0432 \u0438\u0437 \u0433\u0430\u0447\u0438",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1WXUzYCkX06YJxj_m1fTGM6d6bmfPkiOvlu_rNGXzLmM",
+    required: true,
+    group: "gacha"
+  },
+  {
+    id: "HeroOverflowCap",
+    description: "\u041B\u0438\u043C\u0438\u0442 \u043E\u0441\u043A\u043E\u043B\u043A\u043E\u0432 \u0438 \u043A\u043E\u043D\u0432\u0435\u0440\u0442\u0430\u0446\u0438\u044F \u0438\u0437\u0431\u044B\u0442\u043A\u0430 \u0432 \u0430\u043C\u0435\u0442\u0438\u0441\u0442\u044B",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1LaoqEfKtYRBDT43y6irst4AcZwTCbrFf-Zs-iuPdrVo",
+    required: false,
+    group: "gacha"
   },
   {
     id: "PvpLeaguesConfig",
-    description: "\u041B\u0438\u0433\u0438: \u0440\u0435\u0439\u0442\u0438\u043D\u0433, GoldIncomeMultiplier, ExpIncomeMultiplier, SlotMachineRarity",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/16HpoC-9E1NKvXT2zDwAIzBe4M4NK_J-JkJX61ISlUV4"
+    description: "\u041B\u0438\u0433\u0438: \u0440\u0435\u0439\u0442\u0438\u043D\u0433, \u043C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u0438, \u0441\u0431\u0440\u043E\u0441 \u0441\u0435\u0437\u043E\u043D\u0430 \u0438 \u043D\u0430\u0433\u0440\u0430\u0434\u0430",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1a_cJusjDXXjn9LamuZj-mc87XRvvJeH0yomeKKKldBg",
+    required: true,
+    group: "pvp"
   },
   {
     id: "PvpRewardPool",
     description: "\u041D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u0438 \u043F\u043E\u0440\u0430\u0436\u0435\u043D\u0438\u0435 PvP",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1tJjt0mAHSMMbMah-0Iwpq2RunfiYQuGRoTvZVazsBPE"
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1nJCa5U6BFdoxx8QY3KNNMVgxS4M7dhcrxUxZYrjBeRA",
+    required: true,
+    group: "pvp"
   },
   {
-    id: "ChestT3Rewards",
-    description: "\u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0441\u0443\u043D\u0434\u0443\u043A\u0430 \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 PvP",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1yM32jzi4ELnNvoww9oRK0uLUx2kGX2k-Fxu0hYd_R-c"
+    id: "ChestRarityRoll",
+    description: "\u0428\u0430\u043D\u0441\u044B \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u0438 \u0441\u0443\u043D\u0434\u0443\u043A\u0430 \u043F\u043E \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A\u0443 (PVP, Slot\u2026)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1GLpvp1GKEOLUYL9bYTAKmNdoHlZS8ASAlndW1mLlx6M",
+    required: true,
+    group: "chests"
   },
   {
-    id: "ChestT3RND",
-    description: "\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u043D\u0430\u0433\u0440\u0430\u0434\u0430 \u0441\u0443\u043D\u0434\u0443\u043A\u0430 (\u043E\u0434\u0438\u043D \u0440\u043E\u043B\u043B \u043F\u043E \u0448\u0430\u043D\u0441\u0430\u043C)",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/1nGPrUjsYUB63XCKMPy3nqmshcSrNwOlPTedi_zwqUKo"
+    id: "ChestSlot",
+    description: "\u0421\u0443\u043D\u0434\u0443\u043A \u0441\u043B\u043E\u0442-\u043C\u0430\u0448\u0438\u043D\u044B: \u0441\u043B\u043E\u0442\u044B \u0420\u0435\u0434\u043A\u043E\u0441\u0442\u044C_\u0421\u043B\u043E\u0442_\u0412\u0430\u0440\u0438\u0430\u043D\u0442",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1QjX76Dxi5rkEk6MxG5wGVu9PIVXEFx3BKwA-W_-pLAA",
+    required: true,
+    group: "chests"
+  },
+  {
+    id: "ChestPvp",
+    description: "\u0421\u0443\u043D\u0434\u0443\u043A \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u0432 PvP (\u0435\u0441\u043B\u0438 \u0441\u0441\u044B\u043B\u043A\u0443 \u0443\u0431\u0440\u0430\u0442\u044C \u2014 \u0431\u0435\u0440\u0451\u0442\u0441\u044F ChestSlot)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1hshpsa0ajtxSJ1BPnyQOLbFQ7tPi9fCRX97u6IXx6oA?gid=2119983835",
+    required: false,
+    group: "chests"
+  },
+  {
+    id: "CastlePassiveRewardConfig",
+    description: "\u041F\u0430\u0441\u0441\u0438\u0432\u043D\u0430\u044F \u0434\u043E\u0431\u044B\u0447\u0430 \u0437\u0430\u043C\u043A\u043E\u0432 (\u0446\u0438\u043A\u043B 8 \u0447)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1ScP5h0I7Kb3AwVAnZ_dYYCKNfuTCMdL8Z-Lon8sGuM4",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "PlayerNewLevelRewards",
+    description: "\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0437\u0430 \u043D\u043E\u0432\u044B\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0430",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1SqgoBysZ-ZtH0aCdCVoA8eNau3WX67A4geS9zGoQCuA",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "AccountLevelConfig",
+    description: "\u041E\u043F\u044B\u0442 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0430: \u0444\u043E\u0440\u043C\u0443\u043B\u0430 \u0443\u0440\u043E\u0432\u043D\u044F \u0438 XP \u0437\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1huJgGZi3sbe956jjgXy0zMPd_6iEMkiRszopzdxTvqg",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "DailyRewardV3",
+    description: "\u0415\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0435 \u043D\u0430\u0433\u0440\u0430\u0434\u044B (\u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F \u0438 \u043F\u043B\u0430\u0442\u043D\u0430\u044F \u0432\u0435\u0442\u043A\u0430)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/13DhiAVlTTKvHw0vtEINshkLSSwf72O-9HtknW9RGOoA",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "DailyRewardWeeklyBonus",
+    description: "\u041D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441 \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0445 \u043D\u0430\u0433\u0440\u0430\u0434",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1bnWfcKaQiD-5JXfGGlEyfuEiZPy-wkGwomXF6dPimHc",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "TasksAndAchievementsV2",
+    description: "\u0417\u0430\u0434\u0430\u043D\u0438\u044F: \u0434\u0435\u0439\u043B\u0438\u043A\u0438 \u0438 \u043D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u0435",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1Qq8RZl3S972kFGGMgFGs-e1ypwxwoVzRug_9zE-DLW0",
+    required: false,
+    group: "income"
+  },
+  {
+    id: "MiniEventSpinMarathonRewardConfig",
+    description: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442 \xAB\u041C\u0430\u0440\u0430\u0444\u043E\u043D \u0441\u043F\u0438\u043D\u043E\u0432\xBB",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1yn8smNbSKhhlqQ-LfFjjBTY3O-9BVV1l8SR-kZ4LvRk",
+    required: false,
+    group: "events"
+  },
+  {
+    id: "MiniEventChestFrenzyRewardConfig",
+    description: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442 \xAB\u0421\u0443\u043D\u0434\u0443\u0447\u043D\u043E\u0435 \u0431\u0435\u0437\u0443\u043C\u0438\u0435\xBB",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1IRN7ut7h_7FBKTpgb5tdJOy0sslMCMPJu5WfWPDz9jE",
+    required: false,
+    group: "events"
+  },
+  {
+    id: "MiniEventThreeDayChallengeRewardConfig",
+    description: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442 \xAB\u0422\u0440\u0451\u0445\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432\xBB",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/17HdtnVZhyhwtJZCoMPg4y2hIo3KKKOTdQ_HLcC1UynQ",
+    required: false,
+    group: "events"
+  },
+  {
+    id: "MiniEventBattleChampionsRewardConfig",
+    description: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442 \xAB\u0427\u0435\u043C\u043F\u0438\u043E\u043D\u044B \u0431\u0438\u0442\u0432\xBB",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1k5GPM3V24AlhJuGgU9TT_jYax9baKMqJuEX5FEPhl1M",
+    required: false,
+    group: "events"
+  },
+  {
+    id: "MiniEventArenaTriumphRewardConfig",
+    description: "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442 \xAB\u0422\u0440\u0438\u0443\u043C\u0444 \u0430\u0440\u0435\u043D\u044B\xBB",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1FRH--oJ5O8KcS_F5VF6xcucle7gFeSq1zjhVMQ2aO5w",
+    required: false,
+    group: "events"
+  },
+  {
+    id: "EquipmentForgeConfig",
+    description: "\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430: \u0441\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u043A\u043E\u0432\u043A\u0438 (\u041A\u043B\u0430\u0441\u0441_\u0422\u0438\u043F_\u0420\u0435\u0434\u043A\u043E\u0441\u0442\u044C)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/1OmmNQth0JpqMb0Qyx8N2sLK4bGtBrP3CvWzDbiAFaOk?gid=0",
+    required: false,
+    group: "equipment"
+  },
+  {
+    id: "EquipmentUpgradeConfig",
+    description: "\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430: \u0441\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C \u0438 \u0448\u0430\u043D\u0441 \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044F \u043F\u043E \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u0438 \u0438 \u0443\u0440\u043E\u0432\u043D\u044E",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/199xVwg3fwVR97MtjwJVDNCzrGB1cau8wQf2cRILeRCc?gid=0",
+    required: false,
+    group: "equipment"
   },
   {
     id: "DailyIncome",
-    description: "\u0414\u043E\u043F. \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0434\u043E\u0445\u043E\u0434 (\u0434\u0435\u0439\u043B\u0438\u043A\u0438, \u0438\u0432\u0435\u043D\u0442\u044B, \u0411\u041F)",
-    defaultUrl: "https://docs.google.com/spreadsheets/d/15I_LuwR7KChUK_mBmpJJ2ji2VlRh-vO7xJOoT_mbJTU"
+    description: "\u0420\u0443\u0447\u043D\u043E\u0439 \u0434\u043E\u043F. \u0434\u043E\u0445\u043E\u0434 (\u0441\u0442\u0430\u0440\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442, \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D \u2014 \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A\u0438 \u0441\u0447\u0438\u0442\u0430\u044E\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438)",
+    defaultUrl: "https://docs.google.com/spreadsheets/d/15I_LuwR7KChUK_mBmpJJ2ji2VlRh-vO7xJOoT_mbJTU",
+    required: false,
+    group: "manual"
   }
 ];
 
@@ -178,43 +333,63 @@ function looksLikeHtml(text) {
 }
 
 // src/sim/types.ts
-function emptyResources() {
-  return { gold: 0, exp: 0, essence: 0, dust: 0 };
-}
-function addResources(a, b) {
-  return {
-    gold: a.gold + b.gold,
-    exp: a.exp + b.exp,
-    essence: a.essence + b.essence,
-    dust: a.dust + b.dust
-  };
-}
-function scaleResources(a, factor) {
-  return {
-    gold: a.gold * factor,
-    exp: a.exp * factor,
-    essence: a.essence * factor,
-    dust: a.dust * factor
-  };
-}
-function canAfford(have, need) {
-  return have.gold + 1e-9 >= need.gold && have.exp + 1e-9 >= need.exp && have.essence + 1e-9 >= need.essence && have.dust + 1e-9 >= need.dust;
-}
-function subtractResources(have, need) {
-  return {
-    gold: have.gold - need.gold,
-    exp: have.exp - need.exp,
-    essence: have.essence - need.essence,
-    dust: have.dust - need.dust
-  };
-}
 var RESOURCE_IDS = ["gold", "exp", "essence", "dust"];
+var ALL_RESOURCE_IDS = [
+  "gold",
+  "exp",
+  "essence",
+  "dust",
+  "arms",
+  "amethyst",
+  "decor",
+  "equipment"
+];
 var RESOURCE_LABELS = {
   gold: "\u0417\u043E\u043B\u043E\u0442\u043E",
   exp: "\u041E\u043F\u044B\u0442",
   essence: "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F",
-  dust: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u044B\u043B\u044C"
+  dust: "\u0410\u0441\u0442\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043F\u044B\u043B\u044C",
+  arms: "\u0413\u0435\u0440\u0431\u044B",
+  amethyst: "\u0410\u043C\u0435\u0442\u0438\u0441\u0442\u044B",
+  decor: "\u0414\u0435\u043A\u043E\u0440",
+  equipment: "\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430"
 };
+function emptyResources() {
+  return { gold: 0, exp: 0, essence: 0, dust: 0, arms: 0, amethyst: 0, decor: 0, equipment: 0 };
+}
+function addResources(a, b) {
+  const out = emptyResources();
+  for (const id of ALL_RESOURCE_IDS) {
+    out[id] = a[id] + b[id];
+  }
+  return out;
+}
+function scaleResources(a, factor) {
+  const out = emptyResources();
+  for (const id of ALL_RESOURCE_IDS) {
+    out[id] = a[id] * factor;
+  }
+  return out;
+}
+function canAfford(have, need) {
+  return ALL_RESOURCE_IDS.every((id) => have[id] + 1e-9 >= need[id]);
+}
+function subtractResources(have, need) {
+  const out = emptyResources();
+  for (const id of ALL_RESOURCE_IDS) {
+    out[id] = have[id] - need[id];
+  }
+  return out;
+}
+function emptyIncome() {
+  return { ...emptyResources(), energy: 0, accountXp: 0 };
+}
+function addIncome(a, b) {
+  return { ...addResources(a, b), energy: a.energy + b.energy, accountXp: a.accountXp + b.accountXp };
+}
+function scaleIncome(a, factor) {
+  return { ...scaleResources(a, factor), energy: a.energy * factor, accountXp: a.accountXp * factor };
+}
 var RARITY_COLUMNS = [
   "Common",
   "Uncommon",
@@ -229,30 +404,96 @@ var DEFAULT_SIM_PARAMS = {
   energyPerDay: 288,
   spinEnergyCost: 1,
   winRate: 0.55,
-  dustPerPull: 10,
+  dustPerPull: 100,
   sHeroCount: 8,
   factionCount: 4,
   gachaPity: 80,
+  targetHeroPity: 1,
   maxDays: 1e4,
   checkpoints: [20, 60, 80, 120, 240],
   startLeagueIndex: 0,
   startRating: 0,
   weeklyResetEveryDays: 7,
-  weeklyResetRatingBonus: 100,
-  otherDaily: { gold: 0, exp: 0, essence: 0, dust: 0, energy: 0 }
+  premiumDaily: 0,
+  taskCompletionPct: 100,
+  useManualDailyIncome: 0,
+  castlesActive: 4,
+  castleLevel: 0,
+  castleCollectsPerDay: 3,
+  miniEventsOn: 1,
+  miniEventDays: 7,
+  miniEventRank: 0,
+  equipmentPiecesPerHero: 6,
+  equipmentTargetLevel: 0,
+  equipmentRarity: "Common",
+  otherDaily: emptyIncome()
 };
 
 // src/sim/parseGameConfig.ts
+var MINI_EVENT_TABLES = [
+  { table: "MiniEventSpinMarathonRewardConfig", id: "SpinMarathon", label: "\u041C\u0430\u0440\u0430\u0444\u043E\u043D \u0441\u043F\u0438\u043D\u043E\u0432", defaultDays: 7 },
+  { table: "MiniEventChestFrenzyRewardConfig", id: "ChestFrenzy", label: "\u0421\u0443\u043D\u0434\u0443\u0447\u043D\u043E\u0435 \u0431\u0435\u0437\u0443\u043C\u0438\u0435", defaultDays: 7 },
+  { table: "MiniEventThreeDayChallengeRewardConfig", id: "ThreeDayChallenge", label: "\u0422\u0440\u0451\u0445\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432", defaultDays: 3 },
+  { table: "MiniEventBattleChampionsRewardConfig", id: "BattleChampions", label: "\u0427\u0435\u043C\u043F\u0438\u043E\u043D\u044B \u0431\u0438\u0442\u0432", defaultDays: 7 },
+  { table: "MiniEventArenaTriumphRewardConfig", id: "ArenaTriumph", label: "\u0422\u0440\u0438\u0443\u043C\u0444 \u0430\u0440\u0435\u043D\u044B", defaultDays: 7 }
+];
 function parseGameConfig(tables) {
+  const notes = [];
+  const slotTable = requireTable(tables, "SlotMachineBaseDrops");
+  const chestSlotTable = requireTable(tables, "ChestSlot");
+  const chestPvpRaw = tables.get("ChestPvp");
+  const slotChests = parseChestSlotTable(chestSlotTable);
+  const pvpFallbackToSlot = chestPvpRaw === void 0;
+  const pvpChests = chestPvpRaw ? parseChestSlotTable(chestPvpRaw) : slotChests;
+  if (pvpFallbackToSlot) {
+    notes.push("ChestPvp \u043D\u0435 \u0437\u0430\u0434\u0430\u043D (\u0432 \u043F\u0440\u043E\u0434\u0435 \u0442\u0430\u043A\u043E\u0439 \u0442\u0430\u0431\u043B\u0438\u0446\u044B \u043F\u043E\u043A\u0430 \u043D\u0435\u0442): \u0441\u0443\u043D\u0434\u0443\u043A \u0437\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u0432 PvP \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044F \u043F\u043E ChestSlot.");
+  }
+  const dailyTable = tables.get("DailyRewardV3");
+  const weeklyTable = tables.get("DailyRewardWeeklyBonus");
+  const equipmentForge = tables.get("EquipmentForgeConfig");
+  const equipmentUpgrade = tables.get("EquipmentUpgradeConfig");
+  const miniEvents = [];
+  for (const def of MINI_EVENT_TABLES) {
+    const table = tables.get(def.table);
+    if (table) {
+      miniEvents.push({
+        id: def.id,
+        label: def.label,
+        defaultDays: def.defaultDays,
+        milestones: parseMiniEvent(table)
+      });
+    }
+  }
+  const manual = tables.get("DailyIncome");
   return {
     levels: parseLevelProgression(requireTable(tables, "LevelProgression")),
     tierUps: parseHeroTierUp(requireTable(tables, "HeroTierUp")),
-    slotDrops: parseSlotDrops(requireTable(tables, "SlotMachineBaseDrops")),
-    gacha: parseGacha(requireTable(tables, "GachaBaseDrops")),
+    slotDrops: parseSlotDrops(slotTable),
+    slotSpin: parseSlotSpin(slotTable),
+    gacha: parseGacha(
+      requireTable(tables, "GachaBaseDrops"),
+      tables.get("GachaArmsDistribution"),
+      tables.get("GachaHeroExpDistribution"),
+      tables.get("HeroOverflowCap")
+    ),
     leagues: parseLeagues(requireTable(tables, "PvpLeaguesConfig")),
     pvpRewards: parsePvpRewards(requireTable(tables, "PvpRewardPool")),
-    chests: parseChests(requireTable(tables, "ChestT3Rewards"), requireTable(tables, "ChestT3RND")),
-    dailyIncome: parseDailyIncome(requireTable(tables, "DailyIncome"))
+    chests: {
+      slot: slotChests,
+      pvp: pvpChests,
+      pvpFallbackToSlot,
+      rarityRoll: parseRarityRoll(requireTable(tables, "ChestRarityRoll"))
+    },
+    dailyRewards: parseDailyRewards(dailyTable, weeklyTable),
+    tasks: parseTasks(tables.get("TasksAndAchievementsV2")),
+    castle: parseCastle(tables.get("CastlePassiveRewardConfig")),
+    levelRewards: parseLevelRewards(tables.get("PlayerNewLevelRewards")),
+    accountXp: parseAccountXp(tables.get("AccountLevelConfig")),
+    miniEvents,
+    equipment: equipmentForge || equipmentUpgrade ? parseEquipment(equipmentForge, equipmentUpgrade) : null,
+    manualDailyIncome: manual ? parseManualDailyIncome(manual) : null,
+    remote: parseRemoteDefaults(tables.get("CommonRemoteConfigs")),
+    notes
   };
 }
 function requireTable(tables, id) {
@@ -304,6 +545,9 @@ function parseHeroTierUp(table) {
   }
   return rows;
 }
+function slotKeyIsInitialChance(key) {
+  return normalizeHeader(key) === "initialchance";
+}
 function parseSlotDrops(table) {
   const headers = table.headers.map(normalizeHeader);
   if (!headers.some((h) => h === "itemtype") || !headers.some((h) => h === "value" || h === "chance")) {
@@ -314,37 +558,129 @@ function parseSlotDrops(table) {
   const pI = col(["probability", "chance", "\u0432\u0435\u0440\u043E\u044F\u0442\u043D\u043E\u0441\u0442\u044C", "\u0448\u0430\u043D\u0441"]);
   const typeI = col(["itemtype"]);
   const valueI = col(["value"]);
-  const jackpotI = optionalColumn(table.headers, ["isjackpot"]);
-  const affectedI = optionalColumn(table.headers, ["isaffectedbyleague"]);
-  const drops = table.rows.map((row) => ({
+  const drops = table.rows.filter((row) => !slotKeyIsInitialChance(row[keyI] ?? "")).map((row) => ({
     key: row[keyI] ?? "",
     probability: parseNumber(row[pI]),
     itemType: row[typeI] ?? "",
-    value: parseNumber(row[valueI]),
-    isJackpot: jackpotI >= 0 ? parseBool(row[jackpotI]) : false,
-    affectedByLeague: affectedI >= 0 ? parseBool(row[affectedI]) : false
+    value: parseNumber(row[valueI])
   })).filter((row) => row.key !== "" && row.probability > 0);
   if (drops.length === 0) {
     throw new Error("SlotMachineBaseDrops: \u043D\u0435\u0442 \u0434\u0440\u043E\u043F\u043E\u0432");
   }
   return drops;
 }
-function parseGacha(table) {
+function parseSlotSpin(table) {
   const col = columnIndex(table.headers);
+  const keyI = col(["key"]);
+  const x1I = optionalColumn(table.headers, ["probabilityx1"]);
+  const x3I = optionalColumn(table.headers, ["probabilityx3"]);
+  const row = table.rows.find((r) => slotKeyIsInitialChance(r[keyI] ?? ""));
+  if (!row || x1I < 0 && x3I < 0) {
+    return { x1: 0, x3: 1 };
+  }
+  const x1 = Math.max(0, x1I >= 0 ? parseNumber(row[x1I]) : 0);
+  const x3 = Math.max(0, x3I >= 0 ? parseNumber(row[x3I]) : 0);
+  const sum = x1 + x3;
+  if (sum <= 0) {
+    return { x1: 0, x3: 1 };
+  }
+  return { x1: x1 / sum, x3: x3 / sum };
+}
+function parseGacha(drops, arms, heroExp, overflow) {
+  const col = columnIndex(drops.headers);
   const keyI = col(["key"]);
   const pI = col(["probability", "chance"]);
   const byKey = /* @__PURE__ */ new Map();
-  for (const row of table.rows) {
+  for (const row of drops.rows) {
     const key = (row[keyI] ?? "").trim();
     if (!key) {
       continue;
     }
     byKey.set(key.toLowerCase(), parseNumber(row[pI]));
   }
-  const sHero = byKey.get("herostier") ?? byKey.get("s") ?? 0.03;
-  const aHero = byKey.get("heroatier") ?? byKey.get("a") ?? 0.22;
-  const arms = byKey.get("arms") ?? 0.75;
-  return { sHero, aHero, arms };
+  let armsFactionShare = 1 / 8;
+  let armsOmniShare = 0;
+  let armsFactionCount = 8;
+  let armsAvgAmount = 1;
+  if (arms) {
+    const c = columnIndex(arms.headers);
+    const k = c(["key"]);
+    const p = c(["probability"]);
+    const mn = optionalColumn(arms.headers, ["minamount"]);
+    const mx = optionalColumn(arms.headers, ["maxamount"]);
+    let total = 0;
+    let omni = 0;
+    let factions = 0;
+    let amountWeighted = 0;
+    for (const row of arms.rows) {
+      const key = (row[k] ?? "").trim();
+      const prob = parseNumber(row[p]);
+      if (!key || prob <= 0) {
+        continue;
+      }
+      const lo = mn >= 0 ? parseNumber(row[mn], 1) : 1;
+      const hi = mx >= 0 ? parseNumber(row[mx], lo) : lo;
+      total += prob;
+      amountWeighted += prob * (lo + hi) / 2;
+      if (key.toLowerCase() === "omni") {
+        omni += prob;
+      } else {
+        factions += 1;
+      }
+    }
+    if (total > 0 && factions > 0) {
+      armsOmniShare = omni / total;
+      armsFactionCount = factions;
+      armsFactionShare = (1 - armsOmniShare) / factions;
+      armsAvgAmount = amountWeighted / total;
+    }
+  }
+  let heroExpAvgAmount = 0;
+  if (heroExp) {
+    const c = columnIndex(heroExp.headers);
+    const p = c(["probability"]);
+    const a = c(["amount"]);
+    let total = 0;
+    let weighted = 0;
+    for (const row of heroExp.rows) {
+      const prob = parseNumber(row[p]);
+      if (prob > 0) {
+        total += prob;
+        weighted += prob * parseNumber(row[a]);
+      }
+    }
+    heroExpAvgAmount = total > 0 ? weighted / total : 0;
+  }
+  const overflowRows = [];
+  if (overflow) {
+    const c = columnIndex(overflow.headers);
+    const t = c(["basetier"]);
+    const m = c(["maxshardslimit"]);
+    const cur = c(["overflowcurrency"]);
+    const am = c(["overflowamount"]);
+    for (const row of overflow.rows) {
+      if ((row[t] ?? "").trim()) {
+        overflowRows.push({
+          baseTier: row[t].trim(),
+          maxShards: parseNumber(row[m]),
+          currency: (row[cur] ?? "").trim(),
+          amount: parseNumber(row[am])
+        });
+      }
+    }
+  }
+  return {
+    sHero: byKey.get("herostier") ?? byKey.get("s") ?? 0.03,
+    aHero: byKey.get("heroatier") ?? byKey.get("a") ?? 0.22,
+    arms: byKey.get("arms") ?? 0.6,
+    heroExp: byKey.get("herosexp") ?? byKey.get("heroexp") ?? 0,
+    armsFactionShare,
+    armsOmniShare,
+    armsFactionCount,
+    armsAvgAmount,
+    heroExpAvgAmount,
+    overflow: overflowRows
+  };
 }
 function parseLeagues(table) {
   const col = columnIndex(table.headers);
@@ -359,6 +695,7 @@ function parseLeagues(table) {
   const rarityI = optionalColumn(table.headers, ["slotmachinerarity", "slotmachinetier"]);
   const resetLeagueI = optionalColumn(table.headers, ["resetleagueid"]);
   const resetRatingI = optionalColumn(table.headers, ["resetrating"]);
+  const resetRewardI = optionalColumn(table.headers, ["resetrewardamethysts"]);
   const rows = table.rows.map((row) => ({
     name: row[nameI] ?? "",
     id: row[idI] ?? "",
@@ -370,7 +707,8 @@ function parseLeagues(table) {
     expIncomeMultiplier: expI >= 0 ? parseNumber(row[expI], 1) : 1,
     slotMachineRarity: rarityI >= 0 ? row[rarityI] ?? "Common" : "Common",
     resetLeagueId: resetLeagueI >= 0 ? row[resetLeagueI] ?? "" : "",
-    resetRating: resetRatingI >= 0 ? parseNumber(row[resetRatingI]) : 0
+    resetRating: resetRatingI >= 0 ? parseNumber(row[resetRatingI]) : 0,
+    resetRewardAmethysts: resetRewardI >= 0 ? parseNumber(row[resetRewardI]) : 0
   })).filter((row) => row.id !== "");
   if (rows.length === 0) {
     throw new Error("PvpLeaguesConfig: \u043D\u0435\u0442 \u043B\u0438\u0433");
@@ -404,70 +742,290 @@ function parsePvpRewards(table) {
   }
   return rows;
 }
-function parseChests(fixedTable, randomTable) {
-  const fixed = parseChestRewardTable(fixedTable, true);
-  const random = parseChestRewardTable(randomTable, false);
-  if (fixed.length === 0 && random.length === 0) {
-    throw new Error("ChestT3: \u043D\u0435\u0442 \u043D\u0430\u0433\u0440\u0430\u0434");
+function parseRarityRoll(table) {
+  const keyI = columnIndex(table.headers)(["key"]);
+  const out = {};
+  for (const row of table.rows) {
+    const source = (row[keyI] ?? "").trim();
+    if (!source) {
+      continue;
+    }
+    const weights = {};
+    let sum = 0;
+    for (const rarity of RARITY_COLUMNS) {
+      const index = optionalColumn(table.headers, [rarity.toLowerCase()]);
+      const value = index >= 0 ? Math.max(0, parseNumber(row[index])) : 0;
+      weights[rarity] = value;
+      sum += value;
+    }
+    if (sum > 0) {
+      for (const rarity of RARITY_COLUMNS) {
+        weights[rarity] /= sum;
+      }
+      out[source.toLowerCase()] = weights;
+    }
   }
-  return { fixed, random };
+  if (Object.keys(out).length === 0) {
+    throw new Error("ChestRarityRoll: \u043D\u0435\u0442 \u0441\u0442\u0440\u043E\u043A");
+  }
+  return out;
 }
-function parseChestRewardTable(table, guaranteed) {
-  const header = table.matrix[0] ?? table.headers;
-  const col = columnIndex(header);
-  const keyI = optionalColumn(header, ["key"]);
-  if (keyI < 0) {
-    throw new Error("ChestT3: \u043D\u0435\u0442 \u043A\u043E\u043B\u043E\u043D\u043A\u0438 Key");
-  }
-  const pI = optionalColumn(header, ["probability", "chance"]);
-  const rarityIndex = {};
-  for (const rarity of RARITY_COLUMNS) {
-    const index = optionalColumn(header, [rarity.toLowerCase()]);
-    if (index >= 0) {
-      rarityIndex[rarity] = index;
-    }
-  }
-  const rows = [];
-  for (const row of table.matrix.slice(1)) {
-    const key = (row[keyI] ?? "").trim();
-    if (!key || /^key$/i.test(key)) {
+function parseChestSlotTable(table) {
+  const col = columnIndex(table.headers);
+  const keyI = col(["slot", "key"]);
+  const itemI = col(["item"]);
+  const valueI = col(["value"]);
+  const pI = col(["probability"]);
+  const bySlot = /* @__PURE__ */ new Map();
+  for (const row of table.rows) {
+    const parts = (row[keyI] ?? "").trim().split("_");
+    if (parts.length !== 3) {
       continue;
     }
-    const probability = guaranteed ? 1 : pI >= 0 ? parseNumber(row[pI]) : 0;
-    if (!guaranteed && probability <= 0) {
+    const rarity = parts[0];
+    const slot = Number(parts[1]);
+    if (!Number.isFinite(slot)) {
       continue;
     }
-    const amountsByRarity = {};
-    for (const [rarity, index] of Object.entries(rarityIndex)) {
-      amountsByRarity[rarity] = parseNumber(row[index]);
+    const probability = Math.max(0, parseNumber(row[pI]));
+    let slots = bySlot.get(rarity);
+    if (!slots) {
+      slots = /* @__PURE__ */ new Map();
+      bySlot.set(rarity, slots);
     }
-    rows.push({
-      key,
-      itemType: key,
-      probability,
-      amountsByRarity
+    const entries = slots.get(slot) ?? [];
+    entries.push({ item: (row[itemI] ?? "").trim(), value: parseNumber(row[valueI]), probability });
+    slots.set(slot, entries);
+  }
+  const out = {};
+  for (const [rarity, slots] of bySlot) {
+    out[rarity] = [...slots.entries()].sort((a, b) => a[0] - b[0]).map(([, entries]) => {
+      const sum = entries.reduce((acc, e) => acc + e.probability, 0);
+      return entries.map((e) => ({ ...e, probability: sum > 0 ? e.probability / sum : 0 }));
     });
   }
-  return rows;
+  if (Object.keys(out).length === 0) {
+    throw new Error("\u0421\u0443\u043D\u0434\u0443\u043A: \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u0441\u0442\u0440\u043E\u043A \u0432\u0438\u0434\u0430 \u0420\u0435\u0434\u043A\u043E\u0441\u0442\u044C_\u0421\u043B\u043E\u0442_\u0412\u0430\u0440\u0438\u0430\u043D\u0442");
+  }
+  return out;
 }
-function parseDailyIncome(table) {
-  const unscaled = emptyResources();
-  const scaled = emptyResources();
-  let unscaledEnergy = 0;
-  let scaledEnergy = 0;
+function parseList(raw) {
+  const text = (raw ?? "").trim().replace(/^\[/, "").replace(/\]$/, "");
+  if (text === "") {
+    return [];
+  }
+  return text.split(/[|;]/).map((part) => part.trim()).filter((part) => part !== "");
+}
+function zipItems(items, amounts) {
+  const out = [];
+  for (let i = 0; i < items.length; i++) {
+    const amount = parseNumber(amounts[i] ?? amounts[0]);
+    if (items[i] && amount !== 0) {
+      out.push({ item: items[i], amount });
+    }
+  }
+  return out;
+}
+function parseDailyRewards(daily, weekly) {
+  const days = [];
+  if (daily) {
+    const col = columnIndex(daily.headers);
+    const dayI = col(["day"]);
+    const fi = col(["freeitem"]);
+    const fa = col(["freeamount"]);
+    const pi = optionalColumn(daily.headers, ["premiumitem"]);
+    const pa = optionalColumn(daily.headers, ["premiumamount"]);
+    for (const row of daily.rows) {
+      const day = parseNumber(row[dayI]);
+      if (day <= 0) {
+        continue;
+      }
+      days.push({
+        day,
+        free: zipItems(parseList(row[fi]), parseList(row[fa])),
+        premium: pi >= 0 && pa >= 0 ? zipItems(parseList(row[pi]), parseList(row[pa])) : []
+      });
+    }
+  }
+  const weeklyRows = [];
+  if (weekly) {
+    const col = columnIndex(weekly.headers);
+    const dayI = col(["day"]);
+    const itemI = col(["item"]);
+    const amI = col(["amount"]);
+    for (const row of weekly.rows) {
+      const day = parseNumber(row[dayI]);
+      if (day > 0) {
+        weeklyRows.push({ day, items: zipItems(parseList(row[itemI]), parseList(row[amI])) });
+      }
+    }
+  }
+  const cycleDays = days.reduce((max, d) => Math.max(max, d.day), 0);
+  return { cycleDays: Math.max(1, cycleDays), days, weekly: weeklyRows };
+}
+function parseTasks(table) {
+  if (!table) {
+    return [];
+  }
+  const col = columnIndex(table.headers);
+  const typeI = col(["type"]);
+  const rtI = col(["rewardtype"]);
+  const raI = col(["rewardamount"]);
+  return table.rows.map((row) => ({
+    type: (row[typeI] ?? "").trim(),
+    reward: { item: (row[rtI] ?? "").trim(), amount: parseNumber(row[raI]) }
+  })).filter((row) => row.type !== "" && row.reward.item !== "" && row.reward.amount !== 0);
+}
+function parseCastle(table) {
+  if (!table) {
+    return [];
+  }
+  const col = columnIndex(table.headers);
+  const idI = col(["castleid"]);
+  const levelI = col(["level"]);
+  const itemsI = col(["items"]);
+  const valuesI = col(["values"]);
+  return table.rows.map((row) => ({
+    castleId: (row[idI] ?? "").trim(),
+    level: parseNumber(row[levelI]),
+    items: zipItems(parseList(row[itemsI]), parseList(row[valuesI]))
+  })).filter((row) => row.castleId !== "");
+}
+function parseLevelRewards(table) {
+  if (!table) {
+    return [];
+  }
+  const col = columnIndex(table.headers);
+  const rewardI = col(["reward"]);
+  const valueI = col(["value"]);
+  return table.rows.map((row) => ({ item: (row[rewardI] ?? "").trim(), amount: parseNumber(row[valueI]) })).filter((row) => row.item !== "" && row.amount !== 0);
+}
+function parseAccountXp(table) {
+  const out = { base: 10, growth: 1.3, xpSpin: 0, xpBattleWin: 0, xpUpgrade: 0, xpDailyAll: 0 };
+  if (!table) {
+    return out;
+  }
+  const col = columnIndex(table.headers);
+  const keyI = col(["key"]);
+  const valueI = col(["value"]);
+  for (const row of table.rows) {
+    const key = normalizeHeader(row[keyI] ?? "");
+    const value = parseNumber(row[valueI]);
+    if (key === "levelbase") {
+      out.base = value;
+    } else if (key === "levelgrowth") {
+      out.growth = value;
+    } else if (key === "xpspin") {
+      out.xpSpin = value;
+    } else if (key === "xpbattlewin") {
+      out.xpBattleWin = value;
+    } else if (key === "xpupgrade") {
+      out.xpUpgrade = value;
+    } else if (key === "xpdailyall") {
+      out.xpDailyAll = value;
+    }
+  }
+  return out;
+}
+function parseMiniEvent(table) {
+  const col = columnIndex(table.headers);
+  const condI = col(["condition"]);
+  const scoreI = optionalColumn(table.headers, ["minscore"]);
+  const rankFromI = optionalColumn(table.headers, ["rankfrom"]);
+  const rankToI = optionalColumn(table.headers, ["rankto"]);
+  const itemsI = col(["items"]);
+  const valuesI = col(["values"]);
+  return table.rows.map((row) => ({
+    condition: (row[condI] ?? "").trim(),
+    minScore: scoreI >= 0 ? parseNumber(row[scoreI]) : 0,
+    rankFrom: rankFromI >= 0 ? parseNumber(row[rankFromI]) : void 0,
+    rankTo: rankToI >= 0 ? parseNumber(row[rankToI]) : void 0,
+    items: zipItems(parseList(row[itemsI]), parseList(row[valuesI]))
+  })).filter((row) => row.condition !== "");
+}
+function parseEquipment(forge, upgrade) {
+  const out = { forge: [], upgrades: [] };
+  if (forge) {
+    const col = columnIndex(forge.headers);
+    const keyI = col(["key"]);
+    const shardI = optionalColumn(forge.headers, ["forgeshardcost"]);
+    const goldI = optionalColumn(forge.headers, ["forgegoldcost"]);
+    for (const row of forge.rows) {
+      if ((row[keyI] ?? "").trim()) {
+        const key = row[keyI].trim();
+        out.forge.push({
+          key,
+          // Ключ вида Класс_Тип_Редкость (Melee_Weapon_Common).
+          rarity: key.split("_").slice(2).join("_"),
+          shardCost: shardI >= 0 ? parseNumber(row[shardI]) : 0,
+          goldCost: goldI >= 0 ? parseNumber(row[goldI]) : 0
+        });
+      }
+    }
+  }
+  if (upgrade) {
+    const col = columnIndex(upgrade.headers);
+    const tierI = col(["tier"]);
+    const levelI = col(["upgradelevel"]);
+    const shardI = optionalColumn(upgrade.headers, ["upgradeshardcost"]);
+    const goldI = optionalColumn(upgrade.headers, ["upgradegoldcost"]);
+    const succI = optionalColumn(upgrade.headers, ["successprobability"]);
+    for (const row of upgrade.rows) {
+      if ((row[tierI] ?? "").trim()) {
+        out.upgrades.push({
+          rarity: row[tierI].trim(),
+          level: parseNumber(row[levelI]),
+          shardCost: shardI >= 0 ? parseNumber(row[shardI]) : 0,
+          goldCost: goldI >= 0 ? parseNumber(row[goldI]) : 0,
+          successProbability: succI >= 0 ? parseNumber(row[succI], 1) : 1
+        });
+      }
+    }
+  }
+  return out;
+}
+function parseRemoteDefaults(table) {
+  if (!table) {
+    return {};
+  }
+  const map = /* @__PURE__ */ new Map();
+  for (const row of table.rows) {
+    const key = (row[0] ?? "").trim().toLowerCase();
+    if (key) {
+      map.set(key, parseNumber(row[1], NaN));
+    }
+  }
+  const out = {};
+  const interval = map.get("recovery-energy-cfg-interval");
+  const rate = map.get("recovery-energy-cfg-rate") ?? 1;
+  if (interval !== void 0 && Number.isFinite(interval) && interval > 0) {
+    out.energyPerDay = 86400 / interval * (Number.isFinite(rate) ? rate : 1);
+  }
+  const max = map.get("recovery-energy-cfg-max");
+  if (max !== void 0 && Number.isFinite(max)) {
+    out.energyMax = max;
+  }
+  const price = map.get("gacha-summon-price-1");
+  if (price !== void 0 && Number.isFinite(price)) {
+    out.summonPrice = price;
+  }
+  const pity = map.get("gacha-summon-pity-value");
+  if (pity !== void 0 && Number.isFinite(pity)) {
+    out.pity = pity;
+  }
+  return out;
+}
+function parseManualDailyIncome(table) {
+  const unscaled = emptyIncome();
+  const scaled = emptyIncome();
   const header = table.matrix[0] ?? [];
   const looksLikeSplit = normalizeHeader(header[0] ?? "").includes("notaffected") || normalizeHeader(header[0] ?? "").includes("\u043D\u0435\u0437\u0430\u0432\u0438\u0441");
   if (looksLikeSplit) {
     for (const row of table.matrix.slice(1)) {
-      addNamedAmount(row[0], row[1], unscaled, (energy) => {
-        unscaledEnergy += energy;
-      });
-      addNamedAmount(row[2], row[3], scaled, (energy) => {
-        scaledEnergy += energy;
-      });
+      addNamedAmount(row[0], row[1], unscaled);
+      addNamedAmount(row[2], row[3], scaled);
     }
   } else {
-    const col = columnIndex(header.length > 0 ? header : table.headers);
     const keyI = optionalColumn(header, ["key", "item", "resource"]);
     const valueI = optionalColumn(header, ["value", "amount"]);
     const affectedI = optionalColumn(header, ["isaffectedbyleague", "affectedbyleague"]);
@@ -475,18 +1033,12 @@ function parseDailyIncome(table) {
       const name = keyI >= 0 ? row[keyI] : row[0];
       const value = valueI >= 0 ? row[valueI] : row[1];
       const affected = affectedI >= 0 && parseBool(row[affectedI]);
-      addNamedAmount(name, value, affected ? scaled : unscaled, (energy) => {
-        if (affected) {
-          scaledEnergy += energy;
-        } else {
-          unscaledEnergy += energy;
-        }
-      });
+      addNamedAmount(name, value, affected ? scaled : unscaled);
     }
   }
-  return { unscaled, scaled, unscaledEnergy, scaledEnergy };
+  return { unscaled, scaled };
 }
-function addNamedAmount(name, raw, into, onEnergy) {
+function addNamedAmount(name, raw, into) {
   const key = (name ?? "").trim();
   if (!key) {
     return;
@@ -496,54 +1048,52 @@ function addNamedAmount(name, raw, into, onEnergy) {
     return;
   }
   const kind = normalizeItemType(key);
-  if (kind === "gold") {
-    into.gold += amount;
-  } else if (kind === "exp") {
-    into.exp += amount;
-  } else if (kind === "dust") {
-    into.dust += amount;
-  } else if (kind === "essence") {
-    into.essence += amount;
-  } else if (kind === "energy") {
-    onEnergy(amount);
+  if (kind === "gold" || kind === "exp" || kind === "dust" || kind === "essence" || kind === "amethyst" || kind === "decor" || kind === "energy") {
+    into[kind] += amount;
   }
 }
-function describeChestParse(chests) {
-  const energy = chests.random.find((row) => normalizeItemType(row.itemType) === "energy");
-  const energyP = energy?.probability;
-  return [
-    `${chests.fixed.length} \u0444\u0438\u043A\u0441.`,
-    `${chests.random.length} RND`,
-    energyP !== void 0 ? `\u044D\u043D\u0435\u0440\u0433\u0438\u044F p=${energyP}` : "\u0431\u0435\u0437 \u044D\u043D\u0435\u0440\u0433\u0438\u0438"
-  ].join(" \xB7 ");
-}
-function describeDailyIncome(income) {
+function describeManualDailyIncome(income) {
   return `\u0431\u0435\u0437 \u043B\u0438\u0433\u0438: \u0437\u043E\u043B\u043E\u0442\u043E ${income.unscaled.gold}, \u043E\u043F\u044B\u0442 ${income.unscaled.exp} \xB7 \u0441 \u043B\u0438\u0433\u043E\u0439: \u0437\u043E\u043B\u043E\u0442\u043E ${income.scaled.gold}, \u043E\u043F\u044B\u0442 ${income.scaled.exp}`;
 }
 function normalizeItemType(itemType) {
   const raw = itemType.trim().toLowerCase();
-  if (raw === "gold" || raw.includes("gold")) {
+  if (raw === "experience") {
+    return "accountxp";
+  }
+  if (raw.includes("gold")) {
     return "gold";
-  }
-  if (raw === "heroexp" || raw === "exp" || raw.includes("exp")) {
-    return "exp";
-  }
-  if (raw === "astraldust" || raw === "dust" || raw.includes("dust")) {
-    return "dust";
   }
   if (raw.includes("essence")) {
     return "essence";
   }
+  if (raw.includes("dust")) {
+    return "dust";
+  }
+  if (raw === "heroexp" || raw === "unitexperience" || raw === "exp" || raw.includes("exp")) {
+    return "exp";
+  }
+  if (raw === "amethyst") {
+    return "amethyst";
+  }
+  if (raw === "decor") {
+    return "decor";
+  }
+  if (raw === "equipment") {
+    return "equipment";
+  }
   if (raw === "energy") {
     return "energy";
+  }
+  if (raw.startsWith("arms")) {
+    return raw === "armsomni" || raw === "arms" ? "arms" : "armsfaction";
   }
   if (raw === "pvp" || raw === "attack") {
     return "pvp";
   }
-  if (raw === "chest") {
+  if (raw.startsWith("chest")) {
     return "chest";
   }
-  if (raw === "pve" || raw === "raid") {
+  if (raw === "pve" || raw === "raid" || raw === "dungeon") {
     return "pve";
   }
   return raw;
@@ -582,14 +1132,12 @@ function parseNumber(raw, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 function parseBool(raw) {
-  if (!raw) {
-    return false;
-  }
-  const value = raw.trim().toLowerCase();
-  return value === "true" || value === "1" || value === "yes";
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "true" || v === "1" || v === "\u0434\u0430" || v === "yes";
 }
 
 // src/sim/gacha.ts
+var MAX_TARGET_PITY = 3;
 function expectedPullsToSHero(sRate, pity) {
   const p = Math.min(1, Math.max(0, sRate));
   const n = Math.max(1, Math.floor(pity));
@@ -605,12 +1153,25 @@ function expectedPullsToSHero(sRate, pity) {
   const sum = (1 - n * qn1 + (n - 1) * qn) / (p * p);
   return p * sum + n * qn1;
 }
+function expectedSDropsPerTarget(sHeroCount, targetPity) {
+  const n = Math.max(1, sHeroCount);
+  const p = 1 / n;
+  if (!targetPity || n <= 1) {
+    return n;
+  }
+  const q = 1 - p;
+  return (1 - q ** (MAX_TARGET_PITY + 1)) / p;
+}
 function computeGachaEv(gacha, tierUps, params) {
   const pullsToS = expectedPullsToSHero(gacha.sHero, params.gachaPity);
-  const namedGivenS = 1 / Math.max(1, params.sHeroCount);
-  const pullsToNamedShard = pullsToS / namedGivenS;
-  const emblemRate = gacha.arms / Math.max(1, params.factionCount);
-  const pullsToFactionEmblem = emblemRate > 0 ? 1 / emblemRate : Number.POSITIVE_INFINITY;
+  const sDropsPerTarget = expectedSDropsPerTarget(params.sHeroCount, params.targetHeroPity > 0);
+  const pullsToNamedShard = pullsToS * sDropsPerTarget;
+  const emblemsPerArmsDrop = Math.max(1e-4, gacha.armsAvgAmount);
+  const oneHeroRate = gacha.arms * emblemsPerArmsDrop * (gacha.armsFactionShare + gacha.armsOmniShare);
+  const pullsToFactionEmblem = oneHeroRate > 0 ? 1 / oneHeroRate : Number.POSITIVE_INFINITY;
+  const squadFactions = Math.min(Math.max(1, params.factionCount), Math.max(1, gacha.armsFactionCount));
+  const armsPerPull = gacha.arms * emblemsPerArmsDrop * (squadFactions * gacha.armsFactionShare + gacha.armsOmniShare);
+  const shardsPerPull = pullsToNamedShard > 0 ? params.heroCount / pullsToNamedShard : 0;
   const dustPerNamedShard = pullsToNamedShard * params.dustPerPull;
   const dustPerFactionEmblem = pullsToFactionEmblem * params.dustPerPull;
   const shardsPerHero = tierUps.reduce((sum, row) => sum + row.shards, 0);
@@ -618,6 +1179,7 @@ function computeGachaEv(gacha, tierUps, params) {
   const dustPerHeroFullAscension = shardsPerHero * dustPerNamedShard + armsPerHero * dustPerFactionEmblem;
   return {
     pullsToS,
+    sDropsPerTarget,
     pullsToNamedShard,
     pullsToFactionEmblem,
     dustPerNamedShard,
@@ -625,220 +1187,353 @@ function computeGachaEv(gacha, tierUps, params) {
     dustPerHeroFullAscension,
     dustPerSquadFullAscension: dustPerHeroFullAscension * params.heroCount,
     shardsPerHero,
-    armsPerHero
+    armsPerHero,
+    shardsPerPull,
+    armsPerPull,
+    expPerPull: gacha.heroExp * gacha.heroExpAvgAmount
   };
 }
-function dustCostForTierUp(row, ev, heroCount) {
-  return heroCount * (row.shards * ev.dustPerNamedShard + row.arms * ev.dustPerFactionEmblem);
+function pullsForTierUp(row, ev, heroCount, stockShards, haveArms) {
+  const needShards = heroCount * row.shards;
+  const needArms = heroCount * row.arms;
+  let pulls = 0;
+  if (needShards > stockShards + 1e-9) {
+    pulls = Math.max(pulls, ev.shardsPerPull > 0 ? (needShards - stockShards) / ev.shardsPerPull : Number.POSITIVE_INFINITY);
+  }
+  if (needArms > haveArms + 1e-9) {
+    pulls = Math.max(pulls, ev.armsPerPull > 0 ? (needArms - haveArms) / ev.armsPerPull : Number.POSITIVE_INFINITY);
+  }
+  return pulls;
 }
 
 // src/sim/income.ts
-function energyPerSpinFromSlots(slotDrops) {
-  let energy = 0;
-  for (const drop of slotDrops) {
-    if (normalizeItemType(drop.itemType) === "energy") {
-      energy += drop.probability * drop.value;
+function armsShareFor(config, params) {
+  const total = Math.max(1, config.gacha.armsFactionCount);
+  return Math.min(1, Math.max(1, params.factionCount) / total);
+}
+function addItem(bag, item, amount, ctx) {
+  if (amount === 0) {
+    return;
+  }
+  const kind = normalizeItemType(item);
+  switch (kind) {
+    case "gold":
+      bag.gold += ctx.goldMult ? amount * ctx.league.goldIncomeMultiplier : amount;
+      break;
+    case "exp":
+    case "essence":
+    case "dust":
+    case "amethyst":
+    case "decor":
+    case "equipment":
+    case "energy":
+      bag[kind] += amount;
+      break;
+    case "accountxp":
+      bag.accountXp += amount;
+      break;
+    case "arms":
+      bag.arms += amount;
+      break;
+    case "armsfaction":
+      bag.arms += amount * ctx.armsShare;
+      break;
+    case "chest":
+      if (ctx.slotChest) {
+        const add = scaleIncome(ctx.slotChest, amount);
+        const target = bag;
+        Object.assign(target, addIncome(target, add));
+      }
+      break;
+    default:
+      break;
+  }
+}
+function addItems(bag, items, factor, ctx) {
+  for (const reward of items) {
+    addItem(bag, reward.item, reward.amount * factor, ctx);
+  }
+}
+function chestEv(table, roll, ctx) {
+  const bag = emptyIncome();
+  const rarities = RARITY_COLUMNS.filter((r) => table[r] !== void 0);
+  if (rarities.length === 0) {
+    return bag;
+  }
+  const weights = /* @__PURE__ */ new Map();
+  let sum = 0;
+  for (const rarity of rarities) {
+    const w = roll ? roll[rarity] ?? 0 : 1;
+    weights.set(rarity, w);
+    sum += w;
+  }
+  if (sum <= 0) {
+    for (const rarity of rarities) {
+      weights.set(rarity, 1);
+    }
+    sum = rarities.length;
+  }
+  for (const rarity of rarities) {
+    const w = (weights.get(rarity) ?? 0) / sum;
+    if (w <= 0) {
+      continue;
+    }
+    for (const slot of table[rarity]) {
+      for (const entry of slot) {
+        if (entry.item.toLowerCase() === "empty") {
+          continue;
+        }
+        addItem(bag, entry.item, w * entry.probability * entry.value, ctx);
+      }
     }
   }
-  return energy;
+  return bag;
+}
+function slotProbabilityOf(drops, kind) {
+  const total = drops.reduce((acc, d) => acc + d.probability, 0) || 1;
+  let chance = 0;
+  for (const drop of drops) {
+    if (normalizeItemType(drop.itemType) === kind) {
+      chance += drop.probability / total * Math.max(drop.value, 1);
+    }
+  }
+  return chance;
 }
 function computeDailyIncome(config, league, params) {
+  const armsShare = armsShareFor(config, params);
+  const baseCtx = { league, goldMult: true, armsShare };
+  const slotChestEv = chestEv(config.chests.slot, config.chests.rarityRoll.slot, baseCtx);
+  const pvpChestEv = chestEv(config.chests.pvp, config.chests.rarityRoll.pvp, baseCtx);
+  const ctx = { ...baseCtx, slotChest: slotChestEv };
+  const noMultCtx = { ...ctx, goldMult: false };
+  const pX3 = config.slotSpin.x3;
+  const dropTotal = config.slotDrops.reduce((acc, d) => acc + d.probability, 0) || 1;
+  const perSpinSlots = emptyIncome();
+  let slotChestsPerSpin = 0;
+  for (const drop of config.slotDrops) {
+    const kind = normalizeItemType(drop.itemType);
+    const weight = drop.probability / dropTotal * pX3;
+    if (kind === "chest") {
+      slotChestsPerSpin += weight * Math.max(drop.value, 1);
+    } else {
+      addItem(perSpinSlots, drop.itemType, weight * drop.value, ctx);
+    }
+  }
+  const pvpFightsPerSpin = slotProbabilityOf(config.slotDrops, "pvp") * pX3;
+  const opensChest = pvpOpensChest(config, league);
+  const pvpChestPerWin = opensChest ? 1 : 0;
+  const fromDaily = dailyRewardsIncome(config, params, ctx);
+  const fromTasks = tasksIncome(config, params, ctx);
+  const fromCastle = castleIncome(config, params, noMultCtx);
+  const fromManual = manualIncome(config, params, league);
+  const fromOther = { ...params.otherDaily };
+  const constantIncome = [fromDaily, fromTasks, fromCastle, fromManual, fromOther].reduce(addIncome, emptyIncome());
   const cost = Math.max(1e-9, params.spinEnergyCost);
-  const slotEnergyPerSpin = energyPerSpinFromSlots(config.slotDrops);
-  const pvpChance = pvpHitChance(config.slotDrops);
-  const chestEnergyEach = expectedChestEnergy(config.chests, league);
-  const dailyEnergy = config.dailyIncome.unscaledEnergy + config.dailyIncome.scaledEnergy * league.goldIncomeMultiplier + params.otherDaily.energy;
-  const energyPerWinChest = chestEnergyEach;
-  const energyReturnPerSpin = slotEnergyPerSpin + pvpChance * params.winRate * energyPerWinChest;
+  const slotEnergyPerSpin = perSpinSlots.energy;
+  const energyReturnPerSpin = slotEnergyPerSpin + slotChestsPerSpin * slotChestEv.energy + pvpFightsPerSpin * params.winRate * pvpChestPerWin * pvpChestEv.energy;
   const denom = cost - energyReturnPerSpin;
-  const constantEnergy = params.energyPerDay + dailyEnergy;
+  const constantEnergy = params.energyPerDay + constantIncome.energy;
   const spins = denom > 1e-9 ? constantEnergy / denom : constantEnergy / cost;
-  const fromSlots = slotIncome(config.slotDrops, spins, league);
-  const pvpFights = spins * pvpChance;
+  const fromSlots = scaleIncome(perSpinSlots, spins);
+  const slotChests = spins * slotChestsPerSpin;
+  const fromSlotChests = scaleIncome(slotChestEv, slotChests);
+  const pvpFights = spins * pvpFightsPerSpin;
   const pvpWins = pvpFights * params.winRate;
   const pvpLosses = pvpFights * (1 - params.winRate);
-  const fromPvp = addScaled(
-    pvpMatchReward(config, league, "Win"),
-    pvpWins,
-    pvpMatchReward(config, league, "Loss"),
-    pvpLosses
-  );
-  const chestsOpened = pvpWins * (pvpOpensChest(config, league) ? 1 : 0);
-  const fromChests = scaleResources(expectedChestResources(config.chests, league), chestsOpened);
-  const fromDaily = addResources(
-    config.dailyIncome.unscaled,
-    scaleLeagueResources(config.dailyIncome.scaled, league)
-  );
-  const fromOther = {
-    gold: params.otherDaily.gold,
-    exp: params.otherDaily.exp,
-    essence: params.otherDaily.essence,
-    dust: params.otherDaily.dust
-  };
-  const total = sumRes(fromSlots, fromPvp, fromChests, fromDaily, fromOther);
+  const fromPvp = emptyIncome();
+  const winReward = pvpMatchReward(config, league, "Win");
+  const lossReward = pvpMatchReward(config, league, "Loss");
+  Object.assign(fromPvp, addIncome(scaleIncome(winReward, pvpWins), scaleIncome(lossReward, pvpLosses)));
+  const pvpChests = pvpWins * pvpChestPerWin;
+  const fromPvpChests = scaleIncome(pvpChestEv, pvpChests);
+  const chestsOpened = slotChests + pvpChests;
+  const fromEvents = eventsIncome(config, params, noMultCtx, {
+    SlotMachineSpins: spins,
+    ChestOpenings: chestsOpened,
+    AttackingPvpWins: pvpWins
+  });
+  const xp = config.accountXp;
+  const actionXp = emptyIncome();
+  actionXp.accountXp = spins * xp.xpSpin + pvpWins * xp.xpBattleWin + xp.xpDailyAll;
+  const total = [
+    fromSlots,
+    fromPvp,
+    fromSlotChests,
+    fromPvpChests,
+    fromEvents,
+    actionXp,
+    constantIncome
+  ].reduce(addIncome, emptyIncome());
+  total.energy = 0;
   return {
     spins,
     regenEnergy: params.energyPerDay,
-    chestEnergy: chestsOpened * chestEnergyEach,
+    chestEnergy: slotChests * slotChestEv.energy + pvpChests * pvpChestEv.energy,
     slotEnergy: spins * slotEnergyPerSpin,
-    dailyEnergy,
+    dailyEnergy: constantIncome.energy,
     energyReturnPerSpin,
     pvpFights,
     pvpWins,
     pvpLosses,
     chestsOpened,
+    slotChests,
+    pvpChests,
     fromSlots,
     fromPvp,
-    fromChests,
+    fromSlotChests,
+    fromPvpChests,
     fromDaily,
-    fromOther,
+    fromTasks,
+    fromCastle,
+    fromEvents,
+    fromOther: addIncome(fromManual, fromOther),
     total
   };
-}
-function slotIncome(drops, spins, league) {
-  const out = emptyResources();
-  for (const drop of drops) {
-    const amount = spins * drop.probability * drop.value;
-    addCoreItem(out, drop.itemType, amount, league, true);
-  }
-  return out;
-}
-function pvpHitChance(drops) {
-  let chance = 0;
-  for (const drop of drops) {
-    if (normalizeItemType(drop.itemType) === "pvp") {
-      chance += drop.probability * Math.max(drop.value, 1);
-    }
-  }
-  return chance;
 }
 function pvpMatchReward(config, league, result) {
   const exact = config.pvpRewards.find((row2) => row2.leagueId === league.id && row2.result === result);
   const fallback = config.pvpRewards.find((row2) => row2.result === result);
   const row = exact ?? fallback;
+  const out = emptyIncome();
   if (!row) {
-    return emptyResources();
+    return out;
   }
-  return {
-    gold: row.gold,
-    exp: row.exp,
-    essence: row.essence,
-    dust: row.dust
-  };
+  out.gold = row.gold * league.goldIncomeMultiplier;
+  out.exp = row.exp * league.expIncomeMultiplier;
+  out.essence = row.essence;
+  out.dust = row.dust;
+  return out;
 }
 function pvpOpensChest(config, league) {
   const exact = config.pvpRewards.find((row) => row.leagueId === league.id && row.result === "Win");
   const fallback = config.pvpRewards.find((row) => row.result === "Win");
   return (exact ?? fallback)?.opensChest ?? true;
 }
-function amountAtRarity(row, rarity) {
-  const exact = row.amountsByRarity[rarity];
-  if (exact !== void 0) {
-    return exact;
+function dailyRewardsIncome(config, params, ctx) {
+  const out = emptyIncome();
+  const daily = config.dailyRewards;
+  if (daily.days.length === 0) {
+    return out;
   }
-  const common = row.amountsByRarity.Common;
-  if (common !== void 0) {
-    return common;
+  const perDay = 1 / daily.cycleDays;
+  for (const day of daily.days) {
+    addItems(out, day.free, perDay, ctx);
+    if (params.premiumDaily > 0) {
+      addItems(out, day.premium, perDay, ctx);
+    }
   }
-  const values = Object.values(row.amountsByRarity);
-  return values.length > 0 ? values[0] : 0;
-}
-function expectedChestResources(chests, league) {
-  const rarity = league.slotMachineRarity || "Common";
-  const out = emptyResources();
-  for (const row of chests.fixed) {
-    addCoreItem(out, row.itemType, amountAtRarity(row, rarity), league, false);
-  }
-  const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
-  for (const row of chests.random) {
-    const p = weightSum > 0 ? row.probability / weightSum : row.probability;
-    addCoreItem(out, row.itemType, p * amountAtRarity(row, rarity), league, false);
+  for (const bonus of daily.weekly) {
+    addItems(out, bonus.items, perDay, ctx);
   }
   return out;
 }
-function expectedChestEnergy(chests, league) {
-  const rarity = league.slotMachineRarity || "Common";
-  let energy = 0;
-  for (const row of chests.fixed) {
-    if (normalizeItemType(row.itemType) === "energy") {
-      energy += amountAtRarity(row, rarity);
+function tasksIncome(config, params, ctx) {
+  const out = emptyIncome();
+  const pct = Math.max(0, params.taskCompletionPct) / 100;
+  for (const task of config.tasks) {
+    const type = task.type.toLowerCase();
+    if (type === "daily") {
+      addItem(out, task.reward.item, task.reward.amount * pct, ctx);
+    } else if (type === "weekly") {
+      addItem(out, task.reward.item, task.reward.amount * pct / 7, ctx);
     }
-  }
-  const weightSum = chests.random.reduce((sum, row) => sum + row.probability, 0);
-  for (const row of chests.random) {
-    if (normalizeItemType(row.itemType) !== "energy") {
-      continue;
-    }
-    const p = weightSum > 0 ? row.probability / weightSum : row.probability;
-    energy += p * amountAtRarity(row, rarity);
-  }
-  return energy;
-}
-function addCoreItem(out, itemType, amount, league, applySlotLeagueMult) {
-  const kind = normalizeItemType(itemType);
-  if (kind === "gold") {
-    out.gold += applySlotLeagueMult ? amount * league.goldIncomeMultiplier : amount;
-  } else if (kind === "exp") {
-    out.exp += applySlotLeagueMult ? amount * league.expIncomeMultiplier : amount;
-  } else if (kind === "dust") {
-    out.dust += amount;
-  } else if (kind === "essence") {
-    out.essence += amount;
-  }
-}
-function scaleLeagueResources(res, league) {
-  return {
-    gold: res.gold * league.goldIncomeMultiplier,
-    exp: res.exp * league.expIncomeMultiplier,
-    essence: res.essence,
-    dust: res.dust
-  };
-}
-function sumRes(...parts) {
-  const out = emptyResources();
-  for (const part of parts) {
-    out.gold += part.gold;
-    out.exp += part.exp;
-    out.essence += part.essence;
-    out.dust += part.dust;
   }
   return out;
 }
-function addScaled(a, fa, b, fb) {
-  return {
-    gold: a.gold * fa + b.gold * fb,
-    exp: a.exp * fa + b.exp * fb,
-    essence: a.essence * fa + b.essence * fb,
-    dust: a.dust * fa + b.dust * fb
-  };
+function castleIncome(config, params, ctx) {
+  const out = emptyIncome();
+  if (config.castle.length === 0 || params.castlesActive <= 0) {
+    return out;
+  }
+  const castles = [];
+  for (const row of config.castle) {
+    if (!castles.includes(row.castleId)) {
+      castles.push(row.castleId);
+    }
+  }
+  const active = castles.slice(0, Math.max(0, Math.round(params.castlesActive)));
+  for (const castle of active) {
+    const rows = config.castle.filter((row2) => row2.castleId === castle && row2.level <= params.castleLevel).sort((a, b) => b.level - a.level);
+    const row = rows[0] ?? config.castle.find((r) => r.castleId === castle);
+    if (row) {
+      addItems(out, row.items, Math.max(0, params.castleCollectsPerDay), ctx);
+    }
+  }
+  return out;
+}
+function manualIncome(config, params, league) {
+  const out = emptyIncome();
+  if (params.useManualDailyIncome <= 0 || !config.manualDailyIncome) {
+    return out;
+  }
+  const { unscaled, scaled } = config.manualDailyIncome;
+  Object.assign(out, addIncome(unscaled, {
+    ...scaled,
+    gold: scaled.gold * league.goldIncomeMultiplier,
+    exp: scaled.exp * league.expIncomeMultiplier
+  }));
+  return out;
+}
+function eventsIncome(config, params, ctx, activityPerDay) {
+  const out = emptyIncome();
+  if (params.miniEventsOn <= 0 || config.miniEvents.length === 0) {
+    return out;
+  }
+  const durations = config.miniEvents.map((event) => event.defaultDays === 3 ? 3 : Math.max(1, params.miniEventDays));
+  const cycle = durations.reduce((a, b) => a + b, 0);
+  config.miniEvents.forEach((event, index) => {
+    for (const milestone of event.milestones) {
+      if (milestone.rankFrom !== void 0 && milestone.rankTo !== void 0) {
+        const rank = params.miniEventRank;
+        if (rank > 0 && rank >= milestone.rankFrom && rank <= milestone.rankTo) {
+          addItems(out, milestone.items, 1 / cycle, ctx);
+        }
+        continue;
+      }
+      const perDay = activityPerDay[milestone.condition];
+      if (perDay !== void 0 && perDay * durations[index] + 1e-9 >= milestone.minScore) {
+        addItems(out, milestone.items, 1 / cycle, ctx);
+      }
+    }
+  });
+  return out;
 }
 
 // src/sim/simulate.ts
 function runSimulation(config, params) {
   const gacha = computeGachaEv(config.gacha, config.tierUps, params);
-  const notes = [];
+  const notes = [...config.notes];
   const maxLevel = config.levels.reduce((max, row) => Math.max(max, row.level), 1);
   const byLevel = new Map(config.levels.map((row) => [row.level, row]));
   const pendingTiers = assignTierUps(config);
-  const incomeByLeague = config.leagues.map((league2) => ({
-    leagueName: league2.name || league2.id,
-    income: computeDailyIncome(config, league2, params)
+  const incomeByLeague = config.leagues.map((league) => ({
+    leagueName: league.name || league.id,
+    income: computeDailyIncome(config, league, params)
   }));
+  const equipment = equipmentPlan(config, params, notes);
+  const equipmentGoldPerStep = equipment ? equipment.goldTotal / Math.max(1, maxLevel - 1) : 0;
   let day = 0;
-  let squadLevel = 1;
   let leagueIndex = clampLeagueIndex(params.startLeagueIndex, config.leagues.length);
   let pendingLeagueIndex = null;
   let rating = Math.max(0, params.startRating);
-  let inventory = emptyResources();
+  const xpCfg = config.accountXp;
+  const state = {
+    inventory: emptyResources(),
+    shardStock: 0,
+    squadLevel: 1,
+    accountXp: 0,
+    accountLevel: 1,
+    accountThreshold: accountTarget(xpCfg.base, xpCfg.growth, 1)
+  };
   const checkpointDays = /* @__PURE__ */ new Map();
   const stallAcc = /* @__PURE__ */ new Map();
   const daysInLeague = config.leagues.map(() => 0);
   for (const cp of params.checkpoints) {
-    if (squadLevel >= cp) {
+    if (state.squadLevel >= cp) {
       checkpointDays.set(cp, 0);
     }
   }
-  while (day < params.maxDays && squadLevel < maxLevel) {
+  while (day < params.maxDays && state.squadLevel < maxLevel) {
     day += 1;
     if (pendingLeagueIndex !== null) {
       leagueIndex = pendingLeagueIndex;
@@ -846,28 +1541,41 @@ function runSimulation(config, params) {
     }
     daysInLeague[leagueIndex] = (daysInLeague[leagueIndex] ?? 0) + 1;
     const income = incomeByLeague[Math.min(leagueIndex, incomeByLeague.length - 1)]?.income ?? computeDailyIncome(config, config.leagues[leagueIndex], params);
-    inventory = addResources(inventory, income.total);
-    const league2 = config.leagues[leagueIndex];
-    rating = Math.max(0, rating + income.pvpWins * (league2?.winRating ?? 0) + income.pvpLosses * (league2?.lossRating ?? 0));
-    spendDay(pendingTiers, byLevel, inventory, income.total, params, gacha, squadLevel, stallAcc, (next) => {
-      squadLevel = next;
-      for (const cp of params.checkpoints) {
-        if (squadLevel >= cp && !checkpointDays.has(cp)) {
-          checkpointDays.set(cp, day);
+    state.inventory = addResources(state.inventory, income.total);
+    addAccountXp(state, config, income.total.accountXp, config.leagues[leagueIndex], params);
+    const league = config.leagues[leagueIndex];
+    rating = Math.max(0, rating + income.pvpWins * (league?.winRating ?? 0) + income.pvpLosses * (league?.lossRating ?? 0));
+    spendDay({
+      pendingTiers,
+      byLevel,
+      state,
+      daily: income.total,
+      params,
+      config,
+      gacha,
+      equipmentGoldPerStep,
+      stallAcc,
+      onLevel: (next) => {
+        for (const cp of params.checkpoints) {
+          if (next >= cp && !checkpointDays.has(cp)) {
+            checkpointDays.set(cp, day);
+          }
         }
-      }
+      },
+      league
     });
     let nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
     if (params.weeklyResetEveryDays > 0 && day % params.weeklyResetEveryDays === 0) {
-      nextLeagueIndex = Math.max(0, leagueIndex - 1);
-      const resetLeague = config.leagues[nextLeagueIndex];
-      rating = Math.max(0, (resetLeague?.minRating ?? 0) + params.weeklyResetRatingBonus);
+      const ended = config.leagues[leagueIndexForRating(config.leagues, rating)];
+      state.inventory.amethyst += ended?.resetRewardAmethysts ?? 0;
+      rating = Math.max(0, Math.min(rating, ended?.resetRating ?? rating));
+      nextLeagueIndex = leagueIndexForRating(config.leagues, rating);
     }
     if (nextLeagueIndex !== leagueIndex) {
       pendingLeagueIndex = nextLeagueIndex;
     }
   }
-  if (squadLevel >= maxLevel) {
+  if (state.squadLevel >= maxLevel) {
     for (const cp of params.checkpoints) {
       if (cp <= maxLevel && !checkpointDays.has(cp)) {
         checkpointDays.set(cp, day);
@@ -878,15 +1586,19 @@ function runSimulation(config, params) {
   if (unreachable.length > 0) {
     notes.push(`LevelProgression \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430 ${maxLevel}, \u043D\u0435\u0434\u043E\u0441\u0442\u0438\u0436\u0438\u043C\u044B: ${unreachable.join(", ")}.`);
   }
+  if (config.gacha.overflow.length > 0) {
+    notes.push("HeroOverflowCap \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D, \u043D\u043E \u0438\u0437\u0431\u044B\u0442\u043E\u043A \u043E\u0441\u043A\u043E\u043B\u043A\u043E\u0432 \u2192 \u0430\u043C\u0435\u0442\u0438\u0441\u0442\u044B \u0432 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u0438 \u043D\u0435 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044F (\u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445 \u043E \u0441\u043E\u0441\u0442\u0430\u0432\u0435 \u043F\u0443\u043B\u0430 \u0433\u0435\u0440\u043E\u0435\u0432).");
+  }
   const stalls = [...stallAcc.values()].sort((a, b) => b.days - a.days);
-  const league = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
+  const finalLeague = config.leagues[Math.min(leagueIndex, config.leagues.length - 1)];
   return {
     daysRun: day,
-    finalLevel: squadLevel,
+    finalLevel: state.squadLevel,
     maxLevel,
-    finalLeagueName: league?.name || league?.id || "\u2014",
+    finalLeagueName: finalLeague?.name || finalLeague?.id || "\u2014",
     finalRating: rating,
-    inventory,
+    accountLevel: state.accountLevel,
+    inventory: state.inventory,
     checkpoints: params.checkpoints.map((level) => ({
       level,
       day: checkpointDays.get(level) ?? null
@@ -899,59 +1611,86 @@ function runSimulation(config, params) {
       leagueName: row.name || row.id,
       days: daysInLeague[index] ?? 0
     })),
+    equipment,
     notes
   };
 }
-function spendDay(pendingTiers, byLevel, inventoryRef, daily, params, gacha, squadLevelStart, stallAcc, onLevel) {
-  let inventory = inventoryRef;
-  let squadLevel = squadLevelStart;
+function accountTarget(base, growth, level) {
+  return Math.max(1, Math.floor(base * level ** growth));
+}
+function addAccountXp(state, config, xp, league, params) {
+  if (xp <= 0) {
+    return;
+  }
+  state.accountXp += xp;
+  const cfg = config.accountXp;
+  const ctx = { league, goldMult: false, armsShare: armsShareFor(config, params) };
+  let guard = 0;
+  while (state.accountXp >= state.accountThreshold && guard < 1e4) {
+    guard += 1;
+    state.accountLevel += 1;
+    state.accountThreshold += accountTarget(cfg.base, cfg.growth, state.accountLevel);
+    const bag = emptyIncome();
+    for (const reward of config.levelRewards) {
+      addItem(bag, reward.item, reward.amount, ctx);
+    }
+    state.inventory = addResources(state.inventory, bag);
+  }
+}
+function spendDay(input) {
+  const { pendingTiers, byLevel, state, daily, params, config, gacha, equipmentGoldPerStep, stallAcc, onLevel, league } = input;
   const maxLevel = [...byLevel.keys()].reduce((max, level) => Math.max(max, level), 1);
+  const xpUpgrade = config.accountXp.xpUpgrade;
   let progressed = true;
   while (progressed) {
     progressed = false;
-    const unpaid = pendingTiers.find((tier) => !tier.paid && squadLevel >= tier.afterLevel);
+    const unpaid = pendingTiers.find((tier) => !tier.paid && state.squadLevel >= tier.afterLevel);
     if (unpaid) {
-      const dustNeed = dustCostForTierUp(unpaid.row, gacha, params.heroCount);
-      const need2 = { ...emptyResources(), dust: dustNeed };
-      if (canAfford(inventory, need2)) {
-        const next = subtractResources(inventory, need2);
-        copyRes(inventory, next);
+      const pulls = pullsForTierUp(unpaid.row, gacha, params.heroCount, state.shardStock, state.inventory.arms);
+      const dustNeed = Number.isFinite(pulls) ? pulls * params.dustPerPull : Number.POSITIVE_INFINITY;
+      if (state.inventory.dust + 1e-9 >= dustNeed) {
+        state.inventory.dust -= dustNeed;
+        state.inventory.exp += pulls * gacha.expPerPull;
+        state.shardStock += pulls * gacha.shardsPerPull - params.heroCount * unpaid.row.shards;
+        state.inventory.arms += pulls * gacha.armsPerPull - params.heroCount * unpaid.row.arms;
         unpaid.paid = true;
         progressed = true;
         continue;
       }
-      const nextRow = byLevel.get(squadLevel + 1);
-      const surplusNeed = nextRow ? addResources(need2, scaleResources(levelCost(nextRow), params.heroCount)) : need2;
-      recordStall(stallAcc, squadLevel, "dust", inventory, surplusNeed);
+      const nextRow = byLevel.get(state.squadLevel + 1);
+      const need2 = { ...emptyResources(), dust: Number.isFinite(dustNeed) ? dustNeed : 1e15 };
+      const surplusNeed = nextRow ? addResources(need2, levelNeed(nextRow, params, equipmentGoldPerStep)) : need2;
+      recordStall(stallAcc, state.squadLevel, "dust", state.inventory, surplusNeed);
       break;
     }
-    const nextLevel = squadLevel + 1;
+    const nextLevel = state.squadLevel + 1;
     const row = byLevel.get(nextLevel);
     if (!row) {
-      if (squadLevel < maxLevel) {
+      if (state.squadLevel < maxLevel) {
         throw new Error(`LevelProgression: \u043D\u0435\u0442 \u0443\u0440\u043E\u0432\u043D\u044F ${nextLevel}`);
       }
       break;
     }
-    const need = scaleResources(levelCost(row), params.heroCount);
-    if (canAfford(inventory, need)) {
-      const next = subtractResources(inventory, need);
-      copyRes(inventory, next);
-      squadLevel = nextLevel;
-      onLevel(squadLevel);
+    const need = levelNeed(row, params, equipmentGoldPerStep);
+    if (canAfford(state.inventory, need)) {
+      state.inventory = subtractResources(state.inventory, need);
+      state.squadLevel = nextLevel;
+      if (xpUpgrade > 0) {
+        addAccountXp(state, config, xpUpgrade * params.heroCount, league, params);
+      }
+      onLevel(state.squadLevel);
       progressed = true;
       continue;
     }
-    const limiting = limitingResource(inventory, need, daily);
-    recordStall(stallAcc, squadLevel, limiting, inventory, need);
+    const limiting = limitingResource(state.inventory, need, daily);
+    recordStall(stallAcc, state.squadLevel, limiting, state.inventory, need);
     break;
   }
 }
-function copyRes(target, source) {
-  target.gold = source.gold;
-  target.exp = source.exp;
-  target.essence = source.essence;
-  target.dust = source.dust;
+function levelNeed(row, params, equipmentGoldPerStep) {
+  const need = scaleResources(levelCost(row), params.heroCount);
+  need.gold += equipmentGoldPerStep;
+  return need;
 }
 function leagueIndexForRating(leagues, rating) {
   let best = 0;
@@ -974,11 +1713,44 @@ function clampLeagueIndex(index, count) {
 }
 function levelCost(row) {
   return {
+    ...emptyResources(),
     gold: row.goldCost,
     exp: row.isBreakthrough ? 0 : row.expCost,
-    essence: row.isBreakthrough ? row.essenceCost : 0,
-    dust: 0
+    essence: row.isBreakthrough ? row.essenceCost : 0
   };
+}
+function equipmentPlan(config, params, notes) {
+  if (params.equipmentTargetLevel <= 0) {
+    if (config.equipment) {
+      notes.push("\u0422\u0430\u0431\u043B\u0438\u0446\u044B \u044D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B, \u043D\u043E \xAB\u0426\u0435\u043B\u0435\u0432\u043E\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C \u044D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438\xBB = 0 \u2014 \u0441\u0442\u043E\u043A \u0437\u043E\u043B\u043E\u0442\u0430 \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D.");
+    }
+    return null;
+  }
+  if (!config.equipment) {
+    notes.push("\u0417\u0430\u0434\u0430\u043D \u0446\u0435\u043B\u0435\u0432\u043E\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C \u044D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438, \u043D\u043E \u0442\u0430\u0431\u043B\u0438\u0446\u044B EquipmentForgeConfig/EquipmentUpgradeConfig \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B (\u0432 \u043F\u0440\u043E\u0434\u0435 \u0438\u0445 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442) \u2014 \u0441\u0442\u043E\u043A \u043D\u0435 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044F.");
+    return null;
+  }
+  const pieces = params.heroCount * Math.max(0, params.equipmentPiecesPerHero);
+  const forgeAll = config.equipment.forge;
+  const rarityForge = forgeAll.filter((r) => r.rarity.toLowerCase() === params.equipmentRarity.toLowerCase());
+  const forge = rarityForge.length > 0 ? rarityForge : forgeAll;
+  const forgeGold = forge.length > 0 ? forge.reduce((a, r) => a + r.goldCost, 0) / forge.length : 0;
+  const forgeShards = forge.length > 0 ? forge.reduce((a, r) => a + r.shardCost, 0) / forge.length : 0;
+  let upGold = 0;
+  let upShards = 0;
+  for (const row of config.equipment.upgrades) {
+    if (row.rarity.toLowerCase() === params.equipmentRarity.toLowerCase() && row.level >= 1 && row.level <= params.equipmentTargetLevel) {
+      const success = row.successProbability > 0 ? Math.min(1, row.successProbability) : 1;
+      upGold += row.goldCost / success;
+      upShards += row.shardCost / success;
+    }
+  }
+  const goldTotal = pieces * (forgeGold + upGold);
+  const shardsTotal = pieces * (forgeShards + upShards);
+  if (shardsTotal > 0) {
+    notes.push(`\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0435\u0449\u0451 ${Math.round(shardsTotal).toLocaleString("ru-RU")} \u043E\u0441\u043A\u043E\u043B\u043A\u043E\u0432 \u043A\u0443\u0437\u043D\u0438 \u2014 \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u043E\u0441\u043A\u043E\u043B\u043A\u043E\u0432 \u0432 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u0445 \u043D\u0435 \u043E\u043F\u0438\u0441\u0430\u043D, \u0432 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u0438 \u043E\u043D\u0438 \u0441\u0447\u0438\u0442\u0430\u044E\u0442\u0441\u044F \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u043C\u0438.`);
+  }
+  return { pieces, goldTotal, shardsTotal };
 }
 function assignTierUps(config) {
   const breakthroughs = config.levels.filter((row) => row.isBreakthrough).map((row) => row.level).sort((a, b) => a - b);
@@ -1074,6 +1846,7 @@ function simulationReportCsv(result) {
   lines.push(`meta,maxLevel,${result.maxLevel}`);
   lines.push(`meta,finalLeague,${csvCell(result.finalLeagueName)}`);
   lines.push(`meta,finalRating,${result.finalRating}`);
+  lines.push(`meta,accountLevel,${result.accountLevel}`);
   for (const cp of result.checkpoints) {
     lines.push(`checkpoint,${cp.level},${cp.day ?? ""}`);
   }
@@ -1090,10 +1863,12 @@ function simulationReportCsv(result) {
   for (const row of result.incomeByLeague) {
     const t = row.income.total;
     lines.push(`income,${csvCell(row.leagueName)} spins,${row.income.spins}`);
-    lines.push(`income,${csvCell(row.leagueName)} gold,${t.gold}`);
-    lines.push(`income,${csvCell(row.leagueName)} exp,${t.exp}`);
-    lines.push(`income,${csvCell(row.leagueName)} essence,${t.essence}`);
-    lines.push(`income,${csvCell(row.leagueName)} dust,${t.dust}`);
+    for (const id of ALL_RESOURCE_IDS) {
+      lines.push(`income,${csvCell(row.leagueName)} ${id},${t[id]}`);
+    }
+  }
+  for (const id of ALL_RESOURCE_IDS) {
+    lines.push(`inventory,${id},${result.inventory[id]}`);
   }
   return `${lines.join("\n")}
 `;
@@ -1106,12 +1881,15 @@ function csvCell(value) {
 }
 
 // src/ConfigTablesApp.ts
+var REQUIRED_TABLES = CONFIG_TABLES.filter((table) => table.required);
 var ConfigTablesApp = class {
   parsedTables = /* @__PURE__ */ new Map();
   rowUi = /* @__PURE__ */ new Map();
   rowGeneration = /* @__PURE__ */ new Map();
   dirtyIds = /* @__PURE__ */ new Set();
   paramInputs = /* @__PURE__ */ new Map();
+  /** Параметры, которые пользователь поменял руками — значения из CommonRemoteConfigs их не затирают. */
+  touchedParams = /* @__PURE__ */ new Set();
   root;
   loadButton;
   runButton;
@@ -1161,11 +1939,11 @@ var ConfigTablesApp = class {
       "box-sizing: border-box"
     ].join(";");
     const title = document.createElement("h2");
-    title.textContent = "HoC Balance \u2014 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u044F (\u0430\u043B\u044C\u0444\u0430) V2";
+    title.textContent = "HoC Balance \u2014 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u044F (\u0430\u043B\u044C\u0444\u0430) V3";
     title.style.cssText = "margin: 0 0 8px; font-size: 20px; font-weight: 600;";
     root.appendChild(title);
     const intro = document.createElement("p");
-    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F: \u0441\u043B\u043E\u0442\u044B + \u0430\u0440\u0435\u043D\u0430 + DailyIncome. \u041B\u0438\u0433\u0438 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443 \u0441 \u0435\u0436\u0435\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u043C \u0441\u0431\u0440\u043E\u0441\u043E\u043C. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E.";
+    intro.textContent = "EV-\u0441\u0438\u043C\u0443\u043B\u044F\u0442\u043E\u0440 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u0434\u043D\u044F: \u0441\u043B\u043E\u0442\u044B (X1/X3) + \u0441\u0443\u043D\u0434\u0443\u043A\u0438 + \u0430\u0440\u0435\u043D\u0430 + \u0433\u0430\u0447\u0430 + \u0437\u0430\u043C\u043A\u0438, \u043D\u0430\u0433\u0440\u0430\u0434\u044B, \u0437\u0430\u0434\u0430\u043D\u0438\u044F, \u043C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u044B. \u041B\u0438\u0433\u0438 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443 \u0441 \u0435\u0436\u0435\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u043C \u0441\u0431\u0440\u043E\u0441\u043E\u043C \u0441\u0435\u0437\u043E\u043D\u0430. 5 \u0433\u0435\u0440\u043E\u0435\u0432 \u043A\u0430\u0447\u0430\u044E\u0442\u0441\u044F \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u043D\u043E. \u0422\u0430\u0431\u043B\u0438\u0446\u044B \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E \u2014 \u043F\u0440\u043E\u0434 (RemoteSheetsList).";
     intro.style.cssText = "margin: 0 0 14px; font-size: 14px; line-height: 1.45; color: #cfcfcf;";
     root.appendChild(intro);
     root.appendChild(this.createTablesSection());
@@ -1196,8 +1974,20 @@ var ConfigTablesApp = class {
     details.appendChild(summary);
     const list = document.createElement("div");
     list.style.cssText = "display: flex; flex-direction: column; gap: 10px;";
+    const groups = [];
     for (const table of CONFIG_TABLES) {
-      list.appendChild(this.createTableRow(table.id, table.description, table.defaultUrl));
+      if (!groups.includes(table.group)) {
+        groups.push(table.group);
+      }
+    }
+    for (const group of groups) {
+      const heading = document.createElement("div");
+      heading.textContent = CONFIG_GROUP_LABELS[group];
+      heading.style.cssText = "margin-top: 6px; font-size: 12px; font-weight: 600; color: #8fb4e8; text-transform: uppercase; letter-spacing: 0.04em;";
+      list.appendChild(heading);
+      for (const table of CONFIG_TABLES.filter((t) => t.group === group)) {
+        list.appendChild(this.createTableRow(table));
+      }
     }
     details.appendChild(list);
     return details;
@@ -1217,17 +2007,38 @@ var ConfigTablesApp = class {
       this.paramField("energyPerDay", "\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438 / \u0441\u0443\u0442\u043A\u0438", p.energyPerDay, 1),
       this.paramField("spinEnergyCost", "\u042D\u043D\u0435\u0440\u0433\u0438\u0438 \u0437\u0430 \u0441\u043F\u0438\u043D", p.spinEnergyCost, 1),
       this.paramField("winRatePct", "\u0412\u0438\u043D\u0440\u0435\u0439\u0442 PvP %", Number((p.winRate * 100).toFixed(2)), 1),
-      this.paramField("dustPerPull", "\u041F\u044B\u043B\u044C \u0437\u0430 1 \u043A\u0440\u0443\u0442\u043A\u0443", p.dustPerPull, 1),
+      this.paramField("dustPerPull", "\u041F\u044B\u043B\u044C \u0437\u0430 1 \u043A\u0440\u0443\u0442\u043A\u0443 (gacha-summon-price-1)", p.dustPerPull, 1),
       this.paramField("sHeroCount", "\u0413\u0435\u0440\u043E\u0438 S \u0432 \u043F\u0443\u043B\u0435", p.sHeroCount, 1),
-      this.paramField("factionCount", "\u0424\u0440\u0430\u043A\u0446\u0438\u0439 (\u0433\u0435\u0440\u0431\u044B)", p.factionCount, 1),
-      this.paramField("gachaPity", "\u0413\u0430\u0440\u0430\u043D\u0442 S (\u043A\u0440\u0443\u0442\u043A\u0430)", p.gachaPity, 1),
+      this.paramField("factionCount", "\u0424\u0440\u0430\u043A\u0446\u0438\u0439 \u0441\u0440\u0435\u0434\u0438 \u0433\u0435\u0440\u043E\u0435\u0432 \u043E\u0442\u0440\u044F\u0434\u0430 (\u0433\u0435\u0440\u0431\u044B)", p.factionCount, 1),
+      this.paramField("gachaPity", "\u0413\u0430\u0440\u0430\u043D\u0442 S (gacha-summon-pity-value)", p.gachaPity, 1),
+      this.paramField("targetHeroPity", "\u0426\u0435\u043B\u0435\u0432\u043E\u0439 S-\u0433\u0435\u0440\u043E\u0439: \u0433\u0430\u0440\u0430\u043D\u0442 \u043F\u043E\u0441\u043B\u0435 3 \u043F\u0440\u043E\u043C\u0430\u0445\u043E\u0432 (1/0)", p.targetHeroPity, 1),
       this.paramField("startLeagueIndex", "\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u0430\u044F \u043B\u0438\u0433\u0430 (1 = \u0411\u0440\u043E\u043D\u0437\u0430)", p.startLeagueIndex + 1, 1),
       this.paramField("startRating", "\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0439\u0442\u0438\u043D\u0433", p.startRating, 1),
-      this.paramField("weeklyResetEveryDays", "\u0421\u0431\u0440\u043E\u0441 \u043B\u0438\u0433\u0438 \u043A\u0430\u0436\u0434\u044B\u0435 N \u0434\u043D\u0435\u0439", p.weeklyResetEveryDays, 1),
-      this.paramField("weeklyResetRatingBonus", "\u0420\u0435\u0439\u0442\u0438\u043D\u0433 \u043F\u043E\u0441\u043B\u0435 \u0441\u0431\u0440\u043E\u0441\u0430: min +", p.weeklyResetRatingBonus, 1),
+      this.paramField("weeklyResetEveryDays", "\u0421\u0431\u0440\u043E\u0441 \u0441\u0435\u0437\u043E\u043D\u0430 \u043A\u0430\u0436\u0434\u044B\u0435 N \u0434\u043D\u0435\u0439 (\u0441\u0435\u0440\u0432\u0435\u0440: 7)", p.weeklyResetEveryDays, 1),
       this.paramField("maxDays", "\u041C\u0430\u043A\u0441. \u0434\u043D\u0435\u0439", p.maxDays, 1)
     );
     wrap.appendChild(grid);
+    const incomeHeading = document.createElement("div");
+    incomeHeading.textContent = "\u0414\u043E\u043F. \u0438\u0441\u0442\u043E\u0447\u043D\u0438\u043A\u0438 \u0434\u043E\u0445\u043E\u0434\u0430 \u0438 \u0441\u0442\u043E\u043A\u0438";
+    incomeHeading.style.cssText = "font-weight: 600; font-size: 13px; margin: 12px 0 8px; color: #d0d0d0;";
+    wrap.appendChild(incomeHeading);
+    const incomeGrid = document.createElement("div");
+    incomeGrid.style.cssText = "display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;";
+    incomeGrid.append(
+      this.paramField("premiumDaily", "\u041F\u043B\u0430\u0442\u043D\u0430\u044F \u0432\u0435\u0442\u043A\u0430 \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0445 \u043D\u0430\u0433\u0440\u0430\u0434 (1/0)", p.premiumDaily, 1),
+      this.paramField("taskCompletionPct", "\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u043B\u0438\u043A\u043E\u0432/\u043D\u0435\u0434\u0435\u043B\u044C\u043D\u044B\u0445, %", p.taskCompletionPct, 1),
+      this.paramField("castlesActive", "\u0417\u0430\u043C\u043A\u043E\u0432 \u0441 \u0434\u043E\u0431\u044B\u0447\u0435\u0439 (CastlePassiveRewardConfig)", p.castlesActive, 1),
+      this.paramField("castleLevel", "\u0423\u0440\u043E\u0432\u0435\u043D\u044C \u0434\u043E\u0431\u044B\u0447\u0438 \u0437\u0430\u043C\u043A\u043E\u0432", p.castleLevel, 1),
+      this.paramField("castleCollectsPerDay", "\u0421\u0431\u043E\u0440\u043E\u0432 \u0434\u043E\u0431\u044B\u0447\u0438 \u0432 \u0434\u0435\u043D\u044C (\u0446\u0438\u043A\u043B 8 \u0447 \u2192 \u0434\u043E 3)", p.castleCollectsPerDay, 1),
+      this.paramField("miniEventsOn", "\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u044B (1/0)", p.miniEventsOn, 1),
+      this.paramField("miniEventDays", "\u0414\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C \u043C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u0430, \u0434\u043D\u0435\u0439", p.miniEventDays, 1),
+      this.paramField("miniEventRank", "\u041C\u0435\u0441\u0442\u043E \u0432 \xAB\u0427\u0435\u043C\u043F\u0438\u043E\u043D\u0430\u0445 \u0431\u0438\u0442\u0432\xBB (0 = \u0431\u0435\u0437 \u043D\u0430\u0433\u0440\u0430\u0434\u044B)", p.miniEventRank, 1),
+      this.paramField("useManualDailyIncome", "\u041F\u0440\u0438\u0431\u0430\u0432\u0438\u0442\u044C \u0440\u0443\u0447\u043D\u0443\u044E \u0442\u0430\u0431\u043B\u0438\u0446\u0443 DailyIncome (1/0)", p.useManualDailyIncome, 1),
+      this.paramField("equipmentPiecesPerHero", "\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438 \u043D\u0430 \u0433\u0435\u0440\u043E\u044F, \u0448\u0442.", p.equipmentPiecesPerHero, 1),
+      this.paramField("equipmentTargetLevel", "\u0426\u0435\u043B\u0435\u0432\u043E\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C \u044D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438 (0 = \u0432\u044B\u043A\u043B.)", p.equipmentTargetLevel, 1),
+      this.paramField("equipmentRarity", "\u0420\u0435\u0434\u043A\u043E\u0441\u0442\u044C \u044D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0438", p.equipmentRarity, 1, false, true)
+    );
+    wrap.appendChild(incomeGrid);
     const extra = document.createElement("div");
     extra.style.cssText = "display: grid; gap: 10px; margin-top: 10px;";
     extra.append(
@@ -1249,22 +2060,23 @@ var ConfigTablesApp = class {
     );
     wrap.appendChild(other);
     const hint = document.createElement("div");
-    hint.textContent = "\u0420\u0435\u0433\u0435\u043D 288/\u0441\u0443\u0442\u043A\u0438. WR 55%. \u041B\u0438\u0433\u0430 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443; \u043C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u0438 \u043D\u043E\u0432\u043E\u0439 \u043B\u0438\u0433\u0438 \u0441\u043E \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0433\u043E \u0434\u043D\u044F. \u041A\u0430\u0436\u0434\u044B\u0435 7 \u0434\u043D\u0435\u0439 \u2014 \u043C\u0438\u043D\u0443\u0441 1 \u043B\u0438\u0433\u0430, \u0440\u0435\u0439\u0442\u0438\u043D\u0433 = \u043D\u0438\u0436\u043D\u044F\u044F \u0433\u0440\u0430\u043D\u0438\u0446\u0430 + 100. \u0421\u0443\u043D\u0434\u0443\u043A T3 \u0437\u0430 \u043A\u0430\u0436\u0434\u0443\u044E \u043F\u043E\u0431\u0435\u0434\u0443: \u0444\u0438\u043A\u0441. \u043D\u0430\u0433\u0440\u0430\u0434\u044B + \u043E\u0434\u0438\u043D RND.";
+    hint.textContent = "\u0420\u0435\u0433\u0435\u043D \u044D\u043D\u0435\u0440\u0433\u0438\u0438 \u0438 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u0433\u0430\u0447\u0438 \u043F\u043E\u0434\u0442\u044F\u0433\u0438\u0432\u0430\u044E\u0442\u0441\u044F \u0438\u0437 CommonRemoteConfigs (\u0435\u0441\u043B\u0438 \u043F\u043E\u043B\u0435 \u043D\u0435 \u043F\u0440\u0430\u0432\u0438\u043B\u0438 \u0440\u0443\u043A\u0430\u043C\u0438). WR 55%. \u041B\u0438\u0433\u0430 \u043F\u043E \u0440\u0435\u0439\u0442\u0438\u043D\u0433\u0443; \u043C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u0438 \u043D\u043E\u0432\u043E\u0439 \u043B\u0438\u0433\u0438 \u0441\u043E \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0433\u043E \u0434\u043D\u044F. \u0421\u0431\u0440\u043E\u0441 \u0441\u0435\u0437\u043E\u043D\u0430: \u0440\u0435\u0439\u0442\u0438\u043D\u0433 = min(\u0442\u0435\u043A\u0443\u0449\u0438\u0439, ResetRating \u043B\u0438\u0433\u0438) + \u043D\u0430\u0433\u0440\u0430\u0434\u0430 ResetRewardAmethysts. \u0417\u043E\u043B\u043E\u0442\u043E \u0438\u0437 \u0441\u043B\u043E\u0442\u043E\u0432, \u0441\u0443\u043D\u0434\u0443\u043A\u043E\u0432, PvP \u0438 \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0445 \u043D\u0430\u0433\u0440\u0430\u0434 \u0443\u043C\u043D\u043E\u0436\u0430\u0435\u0442\u0441\u044F \u043D\u0430 GoldIncomeMultiplier \u043B\u0438\u0433\u0438, \u043E\u043F\u044B\u0442 PvP \u2014 \u043D\u0430 ExpIncomeMultiplier (\u043A\u0430\u043A \u0432 \u043A\u043B\u0438\u0435\u043D\u0442\u0435); \u0434\u043E\u0431\u044B\u0447\u0430 \u0437\u0430\u043C\u043A\u043E\u0432 \u0438 \u043C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u044B \u2014 \u0431\u0435\u0437 \u043C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u0435\u0439.";
     hint.style.cssText = "margin-top: 10px; font-size: 12px; color: #9e9e9e; line-height: 1.4;";
     wrap.appendChild(hint);
     return wrap;
   }
-  paramField(key, label, value, step, wide = false) {
+  paramField(key, label, value, step, wide = false, text = false) {
     const wrap = document.createElement("label");
     wrap.style.cssText = `display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #bdbdbd;${wide ? " grid-column: 1 / -1;" : ""}`;
     wrap.append(label);
     const input = document.createElement("input");
     input.value = String(value);
-    if (!wide) {
+    if (!wide && !text) {
       input.type = "number";
       input.min = "0";
       input.step = String(step || 1);
     }
+    input.addEventListener("input", () => this.touchedParams.add(key));
     input.style.cssText = [
       "padding: 7px 9px",
       "border: 1px solid #444",
@@ -1294,7 +2106,9 @@ var ConfigTablesApp = class {
     ].join(";");
     return button;
   }
-  createTableRow(id, description, defaultUrl) {
+  createTableRow(table) {
+    const { id, defaultUrl } = table;
+    const description = `${table.description}${table.required ? "" : " \xB7 \u043D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u0430\u044F"}`;
     const row = document.createElement("div");
     row.style.cssText = [
       "display: flex",
@@ -1322,6 +2136,7 @@ var ConfigTablesApp = class {
     const input = document.createElement("input");
     input.type = "url";
     input.value = defaultUrl;
+    input.placeholder = "\u0421\u0441\u044B\u043B\u043A\u0430 Google Sheets (\u0432 \u043F\u0440\u043E\u0434\u0435 \u044D\u0442\u043E\u0439 \u0442\u0430\u0431\u043B\u0438\u0446\u044B \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u2014 \u043C\u043E\u0436\u043D\u043E \u0432\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0441\u0432\u043E\u044E)";
     input.spellcheck = false;
     input.setAttribute("aria-label", `${id} Google Sheets URL`);
     input.style.cssText = [
@@ -1379,12 +2194,31 @@ var ConfigTablesApp = class {
       return;
     }
     const loaded = results.filter(Boolean).length;
+    const requiredLoaded = REQUIRED_TABLES.filter((table) => this.parsedTables.has(table.id)).length;
     this.loadButton.disabled = false;
-    this.summaryEl.textContent = `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${loaded} / ${CONFIG_TABLES.length}`;
-    this.summaryEl.style.color = loaded === CONFIG_TABLES.length ? "#7dcea0" : "#e74c3c";
-    if (loaded === CONFIG_TABLES.length) {
+    this.summaryEl.textContent = `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${loaded} / ${CONFIG_TABLES.length} (\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0445 ${requiredLoaded} / ${REQUIRED_TABLES.length})`;
+    this.summaryEl.style.color = requiredLoaded === REQUIRED_TABLES.length ? "#7dcea0" : "#e74c3c";
+    this.applyRemoteDefaults();
+    if (requiredLoaded === REQUIRED_TABLES.length) {
       this.runSim();
     }
+  }
+  /** Реген энергии, цена и гарант гачи из CommonRemoteConfigs — если поле не правили руками. */
+  applyRemoteDefaults() {
+    const table = this.parsedTables.get("CommonRemoteConfigs");
+    if (!table) {
+      return;
+    }
+    const remote = parseRemoteDefaults(table);
+    const set = (key, value) => {
+      const input = this.paramInputs.get(key);
+      if (input && value !== void 0 && Number.isFinite(value) && !this.touchedParams.has(key)) {
+        input.value = String(Math.round(value * 100) / 100);
+      }
+    };
+    set("energyPerDay", remote.energyPerDay);
+    set("dustPerPull", remote.summonPrice);
+    set("gachaPity", remote.pity);
   }
   async loadOne(id, batchGeneration) {
     const ui = this.rowUi.get(id);
@@ -1398,8 +2232,12 @@ var ConfigTablesApp = class {
     const url = normalizeGoogleSheetUrl(ui.input.value);
     ui.input.value = url;
     ui.openLink.href = url || "#";
-    this.setStatus(id, "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026", "#9e9e9e");
     this.parsedTables.delete(id);
+    if (url === "") {
+      this.setStatus(id, "\u0421\u0441\u044B\u043B\u043A\u0430 \u043D\u0435 \u0437\u0430\u0434\u0430\u043D\u0430 \u2014 \u0442\u0430\u0431\u043B\u0438\u0446\u0430 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u0430", "#9e9e9e");
+      return false;
+    }
+    this.setStatus(id, "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026", "#9e9e9e");
     try {
       const csv = await fetchGoogleSheetCsv(url);
       if (!this.isLoadCurrent(id, rowGeneration, batchGeneration)) {
@@ -1419,13 +2257,13 @@ var ConfigTablesApp = class {
     }
   }
   describeParsedTable(id, parsed) {
-    if (id === "ChestT3Rewards" || id === "ChestT3RND") {
-      const empty = { headers: ["Key"], rows: [], matrix: [["Key"]] };
-      const chests = id === "ChestT3Rewards" ? parseChests(parsed, empty) : parseChests(empty, parsed);
-      return describeChestParse(chests);
+    if (id === "ChestSlot" || id === "ChestPvp") {
+      const table = parseChestSlotTable(parsed);
+      const slots = Math.max(...Object.values(table).map((rarity) => rarity.length));
+      return `${Object.keys(table).length} \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u0435\u0439 \xB7 \u0434\u043E ${slots} \u0441\u043B\u043E\u0442\u043E\u0432`;
     }
     if (id === "DailyIncome") {
-      return describeDailyIncome(parseDailyIncome(parsed));
+      return describeManualDailyIncome(parseManualDailyIncome(parsed));
     }
     const headerPreview = parsed.headers.filter((header) => header !== "").join(", ");
     return `${parsed.rows.length} \u0441\u0442\u0440\u043E\u043A \xB7 ${headerPreview}`;
@@ -1467,13 +2305,26 @@ var ConfigTablesApp = class {
       sHeroCount: Math.max(1, Math.round(num("sHeroCount", d.sHeroCount))),
       factionCount: Math.max(1, Math.round(num("factionCount", d.factionCount))),
       gachaPity: Math.max(1, Math.round(num("gachaPity", d.gachaPity))),
+      targetHeroPity: num("targetHeroPity", d.targetHeroPity) > 0 ? 1 : 0,
       maxDays: Math.max(1, Math.round(num("maxDays", d.maxDays))),
       checkpoints: list("checkpoints", d.checkpoints),
       startLeagueIndex: Math.max(0, Math.round(num("startLeagueIndex", d.startLeagueIndex + 1)) - 1),
       startRating: Math.max(0, num("startRating", d.startRating)),
       weeklyResetEveryDays: Math.max(0, Math.round(num("weeklyResetEveryDays", d.weeklyResetEveryDays))),
-      weeklyResetRatingBonus: num("weeklyResetRatingBonus", d.weeklyResetRatingBonus),
+      premiumDaily: num("premiumDaily", d.premiumDaily) > 0 ? 1 : 0,
+      taskCompletionPct: Math.min(100, Math.max(0, num("taskCompletionPct", d.taskCompletionPct))),
+      useManualDailyIncome: num("useManualDailyIncome", d.useManualDailyIncome) > 0 ? 1 : 0,
+      castlesActive: Math.max(0, Math.round(num("castlesActive", d.castlesActive))),
+      castleLevel: Math.max(0, Math.round(num("castleLevel", d.castleLevel))),
+      castleCollectsPerDay: Math.max(0, num("castleCollectsPerDay", d.castleCollectsPerDay)),
+      miniEventsOn: num("miniEventsOn", d.miniEventsOn) > 0 ? 1 : 0,
+      miniEventDays: Math.max(1, Math.round(num("miniEventDays", d.miniEventDays))),
+      miniEventRank: Math.max(0, Math.round(num("miniEventRank", d.miniEventRank))),
+      equipmentPiecesPerHero: Math.max(0, Math.round(num("equipmentPiecesPerHero", d.equipmentPiecesPerHero))),
+      equipmentTargetLevel: Math.max(0, Math.round(num("equipmentTargetLevel", d.equipmentTargetLevel))),
+      equipmentRarity: (this.paramInputs.get("equipmentRarity")?.value ?? d.equipmentRarity).trim() || d.equipmentRarity,
       otherDaily: {
+        ...d.otherDaily,
         gold: Math.max(0, num("otherGold", d.otherDaily.gold)),
         exp: Math.max(0, num("otherExp", d.otherDaily.exp)),
         essence: Math.max(0, num("otherEssence", d.otherDaily.essence)),
@@ -1485,8 +2336,9 @@ var ConfigTablesApp = class {
   runSim() {
     this.runButton.disabled = true;
     try {
-      if (this.parsedTables.size < CONFIG_TABLES.length) {
-        throw new Error("\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0432\u0441\u0435 \u0442\u0430\u0431\u043B\u0438\u0446\u044B");
+      const missing = REQUIRED_TABLES.filter((table) => !this.parsedTables.has(table.id));
+      if (missing.length > 0) {
+        throw new Error(`\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0442\u0430\u0431\u043B\u0438\u0446\u044B: ${missing.map((table) => table.id).join(", ")}`);
       }
       const config = parseGameConfig(this.parsedTables);
       const result = runSimulation(config, this.readParams());
@@ -1538,16 +2390,20 @@ var ConfigTablesApp = class {
     this.resultsEl.appendChild(this.simpleTable(
       ["\u041C\u0435\u0442\u0440\u0438\u043A\u0430", "\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435"],
       [
-        ["\u041A\u0440\u0443\u0442\u043E\u043A \u0434\u043E S (\u0441 \u0433\u0430\u0440\u0430\u043D\u0442\u043E\u043C 80)", this.fmt(g.pullsToS)],
+        ["\u041A\u0440\u0443\u0442\u043E\u043A \u0434\u043E S (\u0441 \u0433\u0430\u0440\u0430\u043D\u0442\u043E\u043C)", this.fmt(g.pullsToS)],
+        ["S-\u0432\u044B\u043F\u0430\u0434\u0435\u043D\u0438\u0439 \u0434\u043E \u0446\u0435\u043B\u0435\u0432\u043E\u0433\u043E \u0433\u0435\u0440\u043E\u044F", this.fmt(g.sDropsPerTarget)],
+        ["\u041A\u0440\u0443\u0442\u043E\u043A \u043D\u0430 1 \u0438\u043C\u0435\u043D\u043D\u043E\u0439 \u043E\u0441\u043A\u043E\u043B\u043E\u043A", this.fmt(g.pullsToNamedShard)],
         ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u0438\u043C\u0435\u043D\u043D\u043E\u0439 \u043E\u0441\u043A\u043E\u043B\u043E\u043A", this.fmt(g.dustPerNamedShard)],
-        ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u0444\u0440\u0430\u043A\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u0433\u0435\u0440\u0431", this.fmt(g.dustPerFactionEmblem)],
-        [`\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 1 \u0433\u0435\u0440\u043E\u044F (${g.shardsPerHero} \u043E\u0441\u043A. + ${g.armsPerHero} \u0433\u0435\u0440\u0431.)`, this.fmt(g.dustPerHeroFullAscension)],
-        ["\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u043E\u0442\u0440\u044F\u0434\u0430", this.fmt(g.dustPerSquadFullAscension)]
+        ["\u041F\u044B\u043B\u0438 \u043D\u0430 1 \u0444\u0440\u0430\u043A\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u0433\u0435\u0440\u0431 (\u043E\u0434\u0438\u043D\u043E\u0447\u043D\u043E)", this.fmt(g.dustPerFactionEmblem)],
+        [`\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 1 \u0433\u0435\u0440\u043E\u044F (${g.shardsPerHero} \u043E\u0441\u043A. + ${g.armsPerHero} \u0433\u0435\u0440\u0431.), \u0431\u0435\u0437 \u043F\u043E\u0431\u043E\u0447\u043D\u044B\u0445 \u043D\u0430\u0433\u0440\u0430\u0434`, this.fmt(g.dustPerHeroFullAscension)],
+        ["\u041F\u043E\u043B\u043D\u043E\u0435 \u0432\u043E\u0437\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u043E\u0442\u0440\u044F\u0434\u0430, \u0431\u0435\u0437 \u043F\u043E\u0431\u043E\u0447\u043D\u044B\u0445 \u043D\u0430\u0433\u0440\u0430\u0434", this.fmt(g.dustPerSquadFullAscension)],
+        ["\u041E\u043F\u044B\u0442\u0430 \u0433\u0435\u0440\u043E\u0435\u0432 \u0437\u0430 \u043A\u0440\u0443\u0442\u043A\u0443 (\u043F\u043E\u0431\u043E\u0447\u043D\u043E)", this.fmt(g.expPerPull)],
+        ["\u041F\u043E\u043B\u0435\u0437\u043D\u044B\u0445 \u0433\u0435\u0440\u0431\u043E\u0432 \u043E\u0442\u0440\u044F\u0434\u0430 \u0437\u0430 \u043A\u0440\u0443\u0442\u043A\u0443", this.fmt(g.armsPerPull)]
       ]
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0414\u043D\u0435\u0432\u043D\u043E\u0439 \u0434\u043E\u0445\u043E\u0434 \u043F\u043E \u043B\u0438\u0433\u0430\u043C"));
     this.resultsEl.appendChild(this.simpleTable(
-      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "PvP \u0431\u043E\u0451\u0432", "\u0421\u0443\u043D\u0434\u0443\u043A\u0438", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C"],
+      ["\u041B\u0438\u0433\u0430", "\u0421\u043F\u0438\u043D\u044B", "PvP \u0431\u043E\u0451\u0432", "\u0421\u0443\u043D\u0434\u0443\u043A\u0438", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F", "\u041F\u044B\u043B\u044C", "\u0413\u0435\u0440\u0431\u044B", "\u0410\u043C\u0435\u0442\u0438\u0441\u0442\u044B", "\u0414\u0435\u043A\u043E\u0440"],
       result.incomeByLeague.map((row) => [
         row.leagueName,
         this.fmt(row.income.spins),
@@ -1556,8 +2412,37 @@ var ConfigTablesApp = class {
         this.fmt(row.income.total.gold),
         this.fmt(row.income.total.exp),
         this.fmt(row.income.total.essence),
-        this.fmt(row.income.total.dust)
+        this.fmt(row.income.total.dust),
+        this.fmt(row.income.total.arms),
+        this.fmt(row.income.total.amethyst),
+        this.fmt(row.income.total.decor)
       ])
+    ));
+    this.resultsEl.appendChild(this.sectionTitle("\u0418\u0441\u0442\u043E\u0447\u043D\u0438\u043A\u0438 \u0437\u043E\u043B\u043E\u0442\u0430 / \u043E\u043F\u044B\u0442\u0430 / \u043F\u044B\u043B\u0438 \u043F\u043E \u043B\u0438\u0433\u0430\u043C"));
+    this.resultsEl.appendChild(this.simpleTable(
+      ["\u041B\u0438\u0433\u0430", "\u0418\u0441\u0442\u043E\u0447\u043D\u0438\u043A", "\u0417\u043E\u043B\u043E\u0442\u043E", "\u041E\u043F\u044B\u0442", "\u041F\u044B\u043B\u044C", "\u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F"],
+      result.incomeByLeague.flatMap((row) => {
+        const i = row.income;
+        const sources = [
+          ["\u0421\u043B\u043E\u0442\u044B", i.fromSlots],
+          ["PvP", i.fromPvp],
+          ["\u0421\u0443\u043D\u0434\u0443\u043A\u0438 \u0441\u043B\u043E\u0442\u043E\u0432", i.fromSlotChests],
+          ["\u0421\u0443\u043D\u0434\u0443\u043A\u0438 PvP", i.fromPvpChests],
+          ["\u0415\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0435 \u043D\u0430\u0433\u0440\u0430\u0434\u044B", i.fromDaily],
+          ["\u0417\u0430\u0434\u0430\u043D\u0438\u044F", i.fromTasks],
+          ["\u0417\u0430\u043C\u043A\u0438", i.fromCastle],
+          ["\u041C\u0438\u043D\u0438-\u0438\u0432\u0435\u043D\u0442\u044B", i.fromEvents],
+          ["\u041F\u0440\u043E\u0447\u0435\u0435", i.fromOther]
+        ];
+        return sources.map(([label, res]) => [
+          row.leagueName,
+          label,
+          this.fmt(res.gold),
+          this.fmt(res.exp),
+          this.fmt(res.dust),
+          this.fmt(res.essence)
+        ]);
+      })
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u0414\u043D\u0435\u0439 \u0432 \u043B\u0438\u0433\u0430\u0445"));
     this.resultsEl.appendChild(this.simpleTable(
@@ -1566,8 +2451,14 @@ var ConfigTablesApp = class {
     ));
     this.resultsEl.appendChild(this.sectionTitle("\u041E\u0441\u0442\u0430\u0442\u043E\u043A \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u044F"));
     this.resultsEl.appendChild(this.kvLine(
-      `\u0417\u043E\u043B\u043E\u0442\u043E ${this.fmt(result.inventory.gold)} \xB7 \u041E\u043F\u044B\u0442 ${this.fmt(result.inventory.exp)} \xB7 \u042D\u0441\u0441\u0435\u043D\u0446\u0438\u044F ${this.fmt(result.inventory.essence)} \xB7 \u041F\u044B\u043B\u044C ${this.fmt(result.inventory.dust)}`
+      ALL_RESOURCE_IDS.map((id) => `${RESOURCE_LABELS[id]} ${this.fmt(result.inventory[id])}`).join(" \xB7 ")
     ));
+    this.resultsEl.appendChild(this.kvLine(`\u0423\u0440\u043E\u0432\u0435\u043D\u044C \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0430 \u043A \u043A\u043E\u043D\u0446\u0443 \u0441\u0438\u043C\u0443\u043B\u044F\u0446\u0438\u0438: ${result.accountLevel}`));
+    if (result.equipment) {
+      this.resultsEl.appendChild(this.kvLine(
+        `\u042D\u043A\u0438\u043F\u0438\u0440\u043E\u0432\u043A\u0430: ${result.equipment.pieces} \u0448\u0442. \xB7 \u0437\u043E\u043B\u043E\u0442\u043E ${this.fmt(result.equipment.goldTotal)} \xB7 \u043E\u0441\u043A\u043E\u043B\u043A\u0438 \u043A\u0443\u0437\u043D\u0438 ${this.fmt(result.equipment.shardsTotal)}`
+      ));
+    }
     for (const note of result.notes) {
       this.resultsEl.appendChild(this.kvLine(note, "#c9a227"));
     }
